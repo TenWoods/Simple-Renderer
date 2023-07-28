@@ -1,0 +1,16 @@
+# ninja log v5
+3	240	7111989782528195	CMakeFiles/Simple_Renderer.dir/main.cpp.obj	dd49db89052afe5d
+220	305	7112000520370091	Simple_Renderer.exe	f7555e6065c5eec3
+2	220	7112000519550084	CMakeFiles/Simple_Renderer.dir/src/main.cpp.obj	c33869890f5f1786
+8	627	7111992455189776	CMakeFiles/Simple_Renderer.dir/src/glad.c.obj	5bc17541b710b9e
+0	8	0	clean	2fe422b5759dbc5
+0	138	7112731499350557	build.ninja	f3afcc14fc865c52
+3	1710	7118163363050742	CMakeFiles/Simple_Renderer.dir/src/main.cpp.obj	fb7f076db8fd67a3
+15	1715	7118163363100734	CMakeFiles/Simple_Renderer.dir/src/util/Shader.cpp.obj	5fbd01c1de36020b
+12	384	7118253335229025	CMakeFiles/Simple_Renderer.dir/src/util/Camera.cpp.obj	6377c108de863830
+5	594	7118253337307770	CMakeFiles/Simple_Renderer.dir/src/main.cpp.obj	fb7f076db8fd67a3
+594	1800	7118253349378678	Simple_Renderer.exe	fc0cc91ac63b31c8
+3	486	7118283087518447	CMakeFiles/Simple_Renderer.dir/src/main.cpp.obj	fb7f076db8fd67a3
+11	342	7118283363704667	CMakeFiles/Simple_Renderer.dir/src/util/Camera.cpp.obj	6377c108de863830
+4	480	7118283365087591	CMakeFiles/Simple_Renderer.dir/src/main.cpp.obj	fb7f076db8fd67a3
+480	581	7118283366064607	Simple_Renderer.exe	fc0cc91ac63b31c8
