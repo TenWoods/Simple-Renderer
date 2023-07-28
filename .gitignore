@@ -31,8 +31,9 @@
 *.out
 *.app
 
+#build file
+build/
+bin/
+
 #ide
 .idea/
-
-#build
-cmake-build-debug/
