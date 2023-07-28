@@ -2,13 +2,22 @@ cmake_minimum_required(VERSION 3.23)
 project(Simple_Renderer)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build/libs)
 
 include_directories(${PROJECT_SOURCE_DIR}/3rd/glfw/include)
 include_directories(${PROJECT_SOURCE_DIR}/3rd/glm)
 include_directories(${PROJECT_SOURCE_DIR}/3rd/imgui)
+include_directories(${PROJECT_SOURCE_DIR}/3rd/imgui/backends)
 include_directories(${PROJECT_SOURCE_DIR}/3rd/glad/include)
 
-link_directories(${PROJECT_SOURCE_DIR}/lib)
+file(GLOB IMGUI 3rd/imgui/*.cpp 3rd/imgui/backends/imgui_impl_glfw.cpp 3rd/imgui/backends/imgui_impl_opengl3.cpp)
 
-add_executable(Simple_Renderer src/main.cpp src/glad.c src/util/Camera.cpp src/util/Camera.h src/util/Shader.cpp src/util/Shader.h)
-target_link_libraries(Simple_Renderer opengl32 glfw3)
+if(UNIX)
+    link_directories(${PROJECT_SOURCE_DIR}/libs/linux)
+elseif(WIN32)
+    link_directories(${PROJECT_SOURCE_DIR}/libs/win)
+endif()
+
+add_executable(Simple_Renderer src/main.cpp src/glad.c src/util/Camera.cpp src/util/Camera.h src/util/Shader.cpp src/util/Shader.h ${IMGUI})
+target_link_libraries(Simple_Renderer glfw)
