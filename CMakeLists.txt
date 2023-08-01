@@ -20,4 +20,10 @@ elseif(WIN32)
 endif()
 
 add_executable(Simple_Renderer src/main.cpp src/glad.c src/util/Camera.cpp src/util/Camera.h src/util/Shader.cpp src/util/Shader.h ${IMGUI})
-target_link_libraries(Simple_Renderer glfw)
+
+if(UNIX)
+    target_link_libraries(Simple_Renderer glfw)
+elseif(WIN32)
+    target_link_libraries(Simple_Renderer glfw3 opengl32)
+endif()
+
