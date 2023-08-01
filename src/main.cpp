@@ -2,9 +2,8 @@
 #include "util/Shader.h"
 #include "util/Camera.h"
 #include <GLFW/glfw3.h>
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
+#include "util/GUI.hpp"
+#include "objects/Cube.hpp"
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -35,6 +34,7 @@ int main()
     }
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
