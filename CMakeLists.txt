@@ -28,5 +28,5 @@ endif()
 add_executable(Simple_Renderer src/main.cpp src/glad.c ${UTIL} ${OBJ} ${IMGUI})
 target_link_libraries(Simple_Renderer glfw3 assimp::assimp)
 
-add_executable(Simple_Renderer_vulkan src/main.cpp src/Renderer/SVulkan.cpp)
+add_executable(Simple_Renderer_vulkan src/main.cpp src/Renderer/SVulkan.cpp ${OBJ} ${UTIL})
 target_link_libraries(Simple_Renderer glfw3 assimp::assimp Vulkan::Vulkan)

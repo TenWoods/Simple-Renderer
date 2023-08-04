@@ -1,6 +1,6 @@
 #ifndef SIMPLE_RENDERER_SOBJECT_HPP
 #define SIMPLE_RENDERER_SOBJECT_HPP
-#include <glm/glm.hpp>
+#include <glm.hpp>
 #include <string>
 #include <memory>
 #include <vector>
