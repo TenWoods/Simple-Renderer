@@ -32,6 +32,9 @@ int main()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+
+    const GLubyte * ext = glGetString(GL_EXTENSIONS);
+    std::cout << ext << std::endl;
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 

@@ -6,7 +6,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build/libs)
 
 find_package(assimp CONFIG REQUIRED)
-
+find_package(Vulkan REQUIRED)
 
 include_directories(${PROJECT_SOURCE_DIR}/3rd/glfw/include)
 include_directories(${PROJECT_SOURCE_DIR}/3rd/glm)
@@ -25,14 +25,8 @@ elseif(WIN32)
     link_directories(${PROJECT_SOURCE_DIR}/libs/win)
 endif()
 
-<<<<<<< HEAD
-add_executable(Simple_Renderer src/main.cpp src/glad.c src/util/Camera.cpp src/util/Camera.h src/util/Shader.cpp src/util/Shader.h ${IMGUI})
-
-if(UNIX)
-    target_link_libraries(Simple_Renderer glfw)
-elseif(WIN32)
-    target_link_libraries(Simple_Renderer glfw3 opengl32)
-endif()
-
 add_executable(Simple_Renderer src/main.cpp src/glad.c ${UTIL} ${OBJ} ${IMGUI})
-target_link_libraries(Simple_Renderer glfw assimp::assimp)
+target_link_libraries(Simple_Renderer glfw3 assimp::assimp)
+
+add_executable(Simple_Renderer_vulkan src/main.cpp src/Renderer/SVulkan.cpp)
+target_link_libraries(Simple_Renderer glfw3 assimp::assimp Vulkan::Vulkan)
