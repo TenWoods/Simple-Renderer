@@ -1,9 +1,9 @@
 #ifndef SIMPLE_RENDERER_CAMERA_H
 #define SIMPLE_RENDERER_CAMERA_H
 #include <glad/glad.h>
-#include <glm/vec3.hpp>
-#include <glm/matrix.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <vec3.hpp>
+#include <matrix.hpp>
+#include <gtc/matrix_transform.hpp>
 
 namespace SRenderer
 {

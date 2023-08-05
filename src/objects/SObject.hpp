@@ -5,7 +5,7 @@
 #include <memory>
 #include <vector>
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include "../util/stb_image.hpp"
 #include "../util/Shader.h"
 
 enum class TextureType
