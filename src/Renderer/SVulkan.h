@@ -7,6 +7,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <optional>
+
 namespace SRenderer
 {
     const int WIDTH = 800;
@@ -19,6 +21,17 @@ namespace SRenderer
     VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
 
     void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+
+    struct QueueFamilyIndices
+    {
+        std::optional<uint32_t> graphicsFamily;
+
+        bool isComplete()
+        {
+            return graphicsFamily.has_value();
+        }
+    };
+
 #ifdef NDEBUG
     const bool enableValidationLayers = false;
 #else
@@ -31,6 +44,9 @@ namespace SRenderer
         GLFWwindow* window;
         VkInstance instance;
         VkDebugUtilsMessengerEXT debugMessenger;
+        VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+        VkDevice device;
+        VkQueue graphicsQueue;
     private:
         void initWindow();
         void initVulkan();
@@ -38,10 +54,17 @@ namespace SRenderer
         void setupDebugMessenger();
         void renderLoop();
         void release();
+
         bool checkValidationLayerSupport();
         std::vector<const char*> getRequiredExtensions();
+
         void pickPhysicalDevice();
+        bool isDeviceSuitable(VkPhysicalDevice device);
+
+        void createLogicDevice();
+
         void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+        QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
         static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                                                             VkDebugUtilsMessageTypeFlagsEXT messageType,
                                                             const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
