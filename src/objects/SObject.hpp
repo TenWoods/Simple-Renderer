@@ -17,7 +17,6 @@ namespace SRenderer
         glm::vec3 normal;
         glm::vec3 tangent;
         glm::vec2 texcoord;
-        glm::vec3 bitangent;
     };
 
     class SObject
@@ -121,37 +120,15 @@ namespace SRenderer
 
         virtual void add_texture(std::string path, TextureType type)
         {
-            unsigned int tex_id;
-            glGenTextures(1, &tex_id);
-            glBindTexture(GL_TEXTURE_2D, tex_id);
-
-            int width, height, channel;
-            unsigned char* data = stbi_load(path.c_str(), &width, &height, &channel, 0);
-            if (data != nullptr)
+            Texture tmp = Texture(path, type);
+            if (tmp.ID == -1)
             {
-                GLenum format = GL_RED;
-                if (channel == 1)
-                {
-                    format = GL_RED;
-                }
-                else if (channel == 3)
-                {
-                    format = GL_RGB;
-                }
-                else if (channel == 4)
-                {
-                    format = GL_RGBA;
-                }
-                glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-                glGenerateMipmap(GL_TEXTURE_2D);
-                textures.push_back(Texture{path, type});
+                std::cerr << path << ": load error" << std::endl;
             }
             else
             {
-                std::cerr << "Load image error!" << std::endl;
+                textures.emplace_back(Texture(path, type));
             }
-            stbi_image_free(data);
-            glBindTexture(GL_TEXTURE_2D, 0);
         }
     };
 }

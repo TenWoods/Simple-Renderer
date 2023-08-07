@@ -22,7 +22,7 @@ namespace SRenderer
 
     class Texture
     {
-    private:
+    public:
         uint32_t ID;
         int width;
         int height;
