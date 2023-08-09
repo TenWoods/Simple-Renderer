@@ -3,7 +3,7 @@
 #include "util/Camera.h"
 #include <GLFW/glfw3.h>
 #include "util/GUI.hpp"
-#include "objects/Cube.hpp"
+#include "objects/Model.hpp"
 
 const int WIDTH = 800;
 const int HEIGHT = 600;

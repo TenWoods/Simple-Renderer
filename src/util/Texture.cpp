@@ -1,6 +1,7 @@
 #include "Texture.h"
 #include <iostream>
-
+#define STB_IMAGE_IMPLEMENTATION
+#include "../util/stb_image.hpp"
 namespace SRenderer
 {
     Texture::Texture(std::string path, SRenderer::TextureType t) : type(t), ID(-1)
@@ -29,6 +30,7 @@ namespace SRenderer
             }
             glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
             glGenerateMipmap(GL_TEXTURE_2D);
+            this->path = path;
         }
         else
         {

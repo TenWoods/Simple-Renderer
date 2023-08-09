@@ -3,8 +3,6 @@
 #include <vector>
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
-#include "SObject.hpp"
-#include "../util/Texture.h"
 #include "../util/Shader.h"
 
 namespace SRenderer
@@ -48,7 +46,7 @@ namespace SRenderer
             setUpMesh();
         }
 
-        void draw(Shader shader)
+        void draw(const Shader& shader) const
         {
             //TODO
         }

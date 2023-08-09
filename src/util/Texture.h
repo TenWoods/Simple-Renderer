@@ -1,8 +1,6 @@
 #ifndef SIMPLE_RENDERER_TEXTURE_H
 #define SIMPLE_RENDERER_TEXTURE_H
 #include <string>
-#define STB_IMAGE_IMPLEMENTATION
-#include "../util/stb_image.hpp"
 #ifndef __glad_h_
 #include <glad/glad.h>
 #endif
@@ -12,9 +10,8 @@ namespace SRenderer
     enum class TextureType
     {
         NORMAL,
-        DIFFUSE,
+        BASE_COLOR,
         HEIGHT,
-        SPECULAR,
         METALLIC,
         ROUGHNESS,
         AO
@@ -28,8 +25,11 @@ namespace SRenderer
         int height;
         int component;
         TextureType type;
+        std::string path;
     public:
+        Texture(){}
         Texture(std::string path, TextureType type);
+        //TODO: Load by vulkan
     };
 
 }

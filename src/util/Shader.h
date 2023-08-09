@@ -1,7 +1,7 @@
 #ifndef SIMPLE_RENDERER_SHADER_H
 #define SIMPLE_RENDERER_SHADER_H
 #include <string>
-#include <glm.hpp>
+#include <glm/glm.hpp>
 #include <glad/glad.h>
 
 namespace SRenderer
