@@ -30,8 +30,9 @@ namespace SRenderer
 
     void SOpenGL::renderLoop()
     {
-        m_shader = Shader("../../resource/shaders/svertex.vert", "../../resource/shaders/sfragment.frag");
-        addObject("../../resource/model/sibenik/sibenik.obj");
+        m_shader = Shader("../resource/shaders/svertex.vert", "../resource/shaders/sfragment.frag");
+        addModel("../resource/model/sibenik/sibenik.obj");
+        addLight(SLight(glm::vec3(0.0, 5.0, 0.0), glm::vec3(1.0, 1.0, 1.0)));
         glEnable(GL_DEPTH_TEST);
         while (!glfwWindowShouldClose(window))
         {
@@ -46,6 +47,8 @@ namespace SRenderer
             glm::mat4 projection = glm::perspective(glm::radians(mainCamera.get_Zoom()), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
             m_shader.setMat4("projection", projection);
             m_shader.setMat4("view", mainCamera.get_ViewMatrix());
+            //TODO: support multi-light
+            m_shader.setVec3("lightPos", lights[0].get_position());
             //m_shader.setMat4("model", glm::mat4(1.0f));
             for (auto& object : scene_root)
             {
@@ -100,8 +103,13 @@ namespace SRenderer
         release();
     }
 
-    void SOpenGL::addObject(std::string path)
+    void SOpenGL::addModel(std::string path)
     {
         scene_root.emplace_back(std::shared_ptr<Model>(new Model(path)));
+    }
+
+    void SOpenGL::addLight(SRenderer::SLight light)
+    {
+        lights.emplace_back(light);
     }
 }

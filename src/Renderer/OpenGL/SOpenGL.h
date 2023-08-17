@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <memory>
 #include "../../objects/Model.hpp"
+#include "../../objects/SLight.hpp"
 #include "../../util/Camera.h"
 
 namespace SRenderer
@@ -17,6 +18,7 @@ namespace SRenderer
         std::vector<std::shared_ptr<SObject>> scene_root;
         Shader m_shader;
         Camera mainCamera;
+        std::vector<SLight> lights;
         float lastFrame;
         float deltaTime;
     private:
@@ -28,7 +30,9 @@ namespace SRenderer
     public:
         SOpenGL();
         void run();
-        void addObject(std::string path);
+        void addModel(std::string path);
+        void addLight(SLight light);
+
     };
 }
 

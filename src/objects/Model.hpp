@@ -113,7 +113,7 @@ namespace SRenderer
                 aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
                 std::vector<Texture> baseColors = loadMaterialTextures(material, aiTextureType_DIFFUSE, TextureType::BASE_COLOR);
                 textures.insert(textures.end(), baseColors.begin(), baseColors.end());
-                std::vector<Texture> normalMap = loadMaterialTextures(material, aiTextureType_NORMALS, TextureType::NORMAL);
+                std::vector<Texture> normalMap = loadMaterialTextures(material, aiTextureType_HEIGHT, TextureType::NORMAL);
                 textures.insert(textures.end(), normalMap.begin(), normalMap.end());
                 std::vector<Texture> metallicMap = loadMaterialTextures(material, aiTextureType_METALNESS, TextureType::METALLIC);
                 textures.insert(textures.end(), metallicMap.begin(), metallicMap.end());

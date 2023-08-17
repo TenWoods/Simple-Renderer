@@ -83,7 +83,7 @@ namespace SRenderer
             init();
         }
 
-        void Draw(SRenderer::Shader& shader) override
+        void draw(const SRenderer::Shader& shader) override
         {
 
         }
