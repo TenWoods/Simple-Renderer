@@ -1,7 +1,7 @@
 #include <iostream>
 #include "util/Shader.h"
 #include "util/Camera.h"
-#include <GLFW/glfw3.h>
+#include "Renderer/OpenGL/SOpenGL.h"
 #include "util/GUI.hpp"
 #include "objects/Model.hpp"
 

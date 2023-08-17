@@ -3,7 +3,9 @@
 #include <vector>
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
+#include <iostream>
 #include "../util/Shader.h"
+#include "SObject.hpp"
 
 namespace SRenderer
 {
@@ -18,6 +20,7 @@ namespace SRenderer
     private:
         void setUpMesh()
         {
+            //std::cout << '\t' << "Set Up Mesh" << std::endl;
             glGenVertexArrays(1, &VAO);
             glGenBuffers(1, &VBO);
             glGenBuffers(1, &EBO);
@@ -41,14 +44,48 @@ namespace SRenderer
             glBindVertexArray(0);
         }
     public:
-        Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures) : vertices(vertices), indices(indices), textures(textures)
+        Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
         {
+            this->vertices = std::move(vertices);
+            this->indices = std::move(indices);
+            this->textures = std::move(textures);
             setUpMesh();
         }
 
         void draw(const Shader& shader) const
         {
-            //TODO
+            shader.use();
+            glBindVertexArray(VAO);
+            int index = 0;
+            for (const auto& texture : textures)
+            {
+                switch (texture.type)
+                {
+                    case TextureType::BASE_COLOR:
+                        shader.setInt("BaseColorMap", index);
+                        break;
+                    case TextureType::NORMAL:
+                        shader.setInt("NormalMap", index);
+                        break;
+                    case TextureType::METALLIC:
+                        shader.setInt("MetallicMap", index);
+                        break;
+                    case TextureType::ROUGHNESS:
+                        shader.setInt("RoughnessMap", index);
+                        break;
+                    case TextureType::AO:
+                        shader.setInt("AOMap", index);
+                        break;
+                    default:
+                        shader.setInt("OtherMap", index);
+                        break;
+                }
+                glActiveTexture(GL_TEXTURE0 + index);
+                glBindTexture(GL_TEXTURE_2D, texture.ID);
+                index++;
+            }
+            glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+            glActiveTexture(GL_TEXTURE0);
         }
     };
 }

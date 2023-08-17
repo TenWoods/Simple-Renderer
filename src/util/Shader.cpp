@@ -3,7 +3,6 @@
 #include <sstream>
 #include <iostream>
 
-
 namespace SRenderer
 {
     Shader::Shader(const char *vertexPath, const char *fragmentPath)

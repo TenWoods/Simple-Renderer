@@ -28,7 +28,10 @@ namespace SRenderer
         glm::vec3 rotation;
         glm::vec3 scale;
     public:
-        virtual void draw(const Shader& shader) = 0;
+        virtual void draw(const Shader& shader)
+        {
+
+        }
 
         SObject() : position(0.0, 0.0, 0.0), rotation(0.0, 0.0, 0.0), scale(1.0, 1.0, 1.0)
         {

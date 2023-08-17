@@ -11,6 +11,7 @@ namespace SRenderer
     private:
         GLint id;
     public:
+        Shader() = default;
         Shader(const char* vertexPath, const char* fragmentPath);
         void use() const;
         void setBool(const std::string& name, bool value) const;

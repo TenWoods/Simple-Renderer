@@ -34,7 +34,7 @@ namespace SRenderer
         }
         else
         {
-            std::cerr << "Load image error!" << std::endl;
+            std::cerr << "Load image error! Path: <" << path << '>' << std::endl;
         }
         stbi_image_free(data);
         glBindTexture(GL_TEXTURE_2D, 0);

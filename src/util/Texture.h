@@ -14,7 +14,8 @@ namespace SRenderer
         HEIGHT,
         METALLIC,
         ROUGHNESS,
-        AO
+        AO,
+        Other
     };
 
     class Texture

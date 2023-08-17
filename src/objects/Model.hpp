@@ -7,6 +7,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace SRenderer
 {
@@ -14,7 +15,6 @@ namespace SRenderer
     {
     private:
         std::vector<Mesh> meshes;
-        std::vector<Texture> textures;
         std::vector<Texture> loaded_textures;
         std::string directory;
     public:
@@ -25,7 +25,13 @@ namespace SRenderer
 
         void draw(const Shader& shader) override
         {
+            //std::cout << "Draw!" << std::endl;
             //TODO: set position, rotation and scale
+            shader.use();
+            glm::mat4 model(1.0f);
+            model = glm::translate(model, position);
+            model = glm::scale(model, scale);
+            shader.setMat4("model", model);
             for (const auto& mesh : meshes)
             {
                 mesh.draw(shader);
@@ -33,26 +39,35 @@ namespace SRenderer
         }
 
     private:
-        void loadModel(std::string path)
+        void loadModel(const std::string& path)
         {
             Assimp::Importer importer;
-            const aiScene* scene = importer.ReadFile(path.c_str(),
+            const aiScene* scene = importer.ReadFile(path,
                                                      aiProcess_CalcTangentSpace | aiProcess_FlipUVs | aiProcess_Triangulate | aiProcess_GenNormals);
             if (scene == nullptr || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || scene->mRootNode == nullptr)
             {
                 std::cerr << "Load model failed: " << importer.GetErrorString() << std::endl;
                 return;
             }
-            directory = path.substr(0, path.find_last_of('/'));
+            directory = path.substr(0, path.find_last_of('/')) +'/';
+            //std::cout << path << ' ' << directory << std::endl;
             processNode(scene->mRootNode, scene);
+            std::cout << "Load model: <" << path << "> success" << std::endl;
         }
 
         void processNode(aiNode* node, const aiScene* scene)
         {
+            //std::cout << "Mesh Num: " << node->mNumMeshes << std::endl;
             for (int i = 0; i < node->mNumMeshes; i++)
             {
+                //std::cout << "Process Mesh " << i << std::endl;
                 aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
                 meshes.emplace_back(processMesh(mesh, scene));
+            }
+            //std::cout << "Children Num: " << node->mNumChildren << std::endl;
+            for (int i = 0; i < node->mNumChildren; i++)
+            {
+                processNode(node->mChildren[i], scene);
             }
         }
 
@@ -61,13 +76,17 @@ namespace SRenderer
             std::vector<Vertex> vertices;
             std::vector<unsigned int> indices;
             std::vector<Texture> textures;
-
+            //std::cout << '\t' << "Vertex Num: " << mesh->mNumVertices << std::endl;
             for (int i = 0; i < mesh->mNumVertices; i++)
             {
                 Vertex vertex{};
                 vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
                 vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
-                vertex.tangent = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
+                if (mesh->mTangents != nullptr)
+                {
+                    vertex.tangent = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
+                }
+                //std::cout << vertex.position.x << ' ' << vertex.position.y << ' ' << vertex.position.z << std::endl;
                 if (mesh->mTextureCoords[0] != nullptr)
                 {
                     vertex.texcoord = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
@@ -76,22 +95,23 @@ namespace SRenderer
                 {
                     vertex.texcoord = glm::vec2(0.0f, 0.0f);
                 }
-                vertices.emplace_back(vertex);
+                vertices.push_back(vertex);
             }
-
+            //std::cout << '\t' << "Face Num: " << mesh->mNumFaces << std::endl;
             for (int i = 0; i < mesh->mNumFaces; i++)
             {
                 aiFace face = mesh->mFaces[i];
+                //std::cout << "Face" << i << "indices Num: " << face.mNumIndices << std::endl;
                 for (int j = 0; j < face.mNumIndices; j++)
                 {
                     indices.emplace_back(face.mIndices[j]);
                 }
             }
-
+            //std::cout << '\t' << "Material Index: " << mesh->mMaterialIndex << std::endl;
             if (mesh->mMaterialIndex >= 0)
             {
                 aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-                std::vector<Texture> baseColors = loadMaterialTextures(material, aiTextureType_BASE_COLOR, TextureType::BASE_COLOR);
+                std::vector<Texture> baseColors = loadMaterialTextures(material, aiTextureType_DIFFUSE, TextureType::BASE_COLOR);
                 textures.insert(textures.end(), baseColors.begin(), baseColors.end());
                 std::vector<Texture> normalMap = loadMaterialTextures(material, aiTextureType_NORMALS, TextureType::NORMAL);
                 textures.insert(textures.end(), normalMap.begin(), normalMap.end());
@@ -108,6 +128,7 @@ namespace SRenderer
         std::vector<Texture> loadMaterialTextures(aiMaterial* material, aiTextureType aiType, TextureType type)
         {
             std::vector<Texture> textures;
+            //std::cout << '\t' << "Texture Num: " << material->GetTextureCount(aiType) << std::endl;
             for (int i = 0; i < material->GetTextureCount(aiType); i++)
             {
                 aiString str;

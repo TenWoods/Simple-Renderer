@@ -1,4 +1,5 @@
 #include "Camera.h"
+#include <iostream>
 
 namespace SRenderer
 {
@@ -59,6 +60,8 @@ namespace SRenderer
             default:
                 break;
         }
+//        std::cout << deltaTime << std::endl;
+//        std::cout << position.x << ',' << position.y << ',' << position.z << std::endl;
     }
 
     void Camera::rotate(float xoffset, float yoffset, GLboolean constrainPitch)
