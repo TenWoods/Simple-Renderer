@@ -84,6 +84,7 @@ namespace SRenderer
                 vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
                 if (mesh->mTangents != nullptr)
                 {
+                    std::cout << "Tangent" << std::endl;
                     vertex.tangent = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
                 }
                 //std::cout << vertex.position.x << ' ' << vertex.position.y << ' ' << vertex.position.z << std::endl;

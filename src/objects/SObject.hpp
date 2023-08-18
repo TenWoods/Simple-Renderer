@@ -15,6 +15,7 @@ namespace SRenderer
         glm::vec3 normal;
         glm::vec3 tangent;
         glm::vec2 texcoord;
+        glm::vec4 base_color;
     };
 
     class SObject
