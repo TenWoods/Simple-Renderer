@@ -37,3 +37,6 @@ bin/
 
 #ide
 .idea/
+
+#model
+resource/model/
