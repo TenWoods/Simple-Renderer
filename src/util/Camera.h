@@ -29,12 +29,21 @@ namespace SRenderer
         float zoom;
         float pitch;
         float yaw;
+        float near;
+        float far;
     public:
         Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch);
         Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
         glm::mat4 get_ViewMatrix();
+        glm::mat4 get_Projection(int width, int height);
         void move(Direction dir, float deltaTime);
         void rotate(float xoffset, float yoffset, GLboolean constrainPitch = true);
+
+        void set_near(float value);
+        float get_near() const;
+
+        void set_far(float value);
+        float get_far()const;
 
         void set_Zoom(float value);
         [[nodiscard]] float get_Zoom() const;

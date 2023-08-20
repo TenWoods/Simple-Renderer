@@ -54,6 +54,7 @@ namespace SRenderer
         void draw(const Shader& shader) const
         {
             shader.use();
+            //std::cout << "Draw Mesh ";
             glBindVertexArray(VAO);
             int index = 0;
             for (const auto& texture : textures)
@@ -66,11 +67,8 @@ namespace SRenderer
                     case TextureType::NORMAL:
                         shader.setInt("NormalMap", index);
                         break;
-                    case TextureType::METALLIC:
-                        shader.setInt("MetallicMap", index);
-                        break;
-                    case TextureType::ROUGHNESS:
-                        shader.setInt("RoughnessMap", index);
+                    case TextureType::METALLIC_ROUGHNESS:
+                        shader.setInt("MetallicRoughnessMap", index);
                         break;
                     case TextureType::AO:
                         shader.setInt("AOMap", index);
@@ -85,6 +83,7 @@ namespace SRenderer
             }
             glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
             glActiveTexture(GL_TEXTURE0);
+            glBindVertexArray(0);
         }
     };
 }

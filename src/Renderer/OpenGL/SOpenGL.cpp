@@ -1,5 +1,6 @@
 #include "SOpenGL.h"
 #include <iostream>
+#include <functional>
 
 namespace SRenderer
 {
@@ -22,6 +23,11 @@ namespace SRenderer
         }
         glfwMakeContextCurrent(window);
         glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+        std::function<void(GLFWwindow*,double,double)>callback = [this](GLFWwindow* w, double x, double y)
+        {
+            mouse_callback(w, x, y);
+        };
+        //glfwSetCursorPosCallback(window, callback);
         if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
         {
             std::cout << "Failed to initialize GLAD" << std::endl;
@@ -30,8 +36,10 @@ namespace SRenderer
 
     void SOpenGL::renderLoop()
     {
-        m_shader = Shader("../resource/shaders/svertex.vert", "../resource/shaders/sfragment.frag");
-        addModel("../resource/model/sibenik/sibenik.obj");
+        m_shader = Shader("../../resource/shaders/svertex.vert", "../../resource/shaders/sfragment.frag");
+        addModel("../../resource/model/sponza/Sponza.gltf");
+        scene_root[0]->set_scale(glm::vec3(0.5f, 0.5f, 0.5f));
+        scene_root[0]->set_position(glm::vec3(1.0f, 0.0f, 0.0f));
         addLight(SLight(glm::vec3(0.0, 5.0, 0.0), glm::vec3(1.0, 1.0, 1.0)));
         glEnable(GL_DEPTH_TEST);
         while (!glfwWindowShouldClose(window))
@@ -44,7 +52,7 @@ namespace SRenderer
             glClearColor(1.0, 1.0, 1.0, 1.0);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             m_shader.use();
-            glm::mat4 projection = glm::perspective(glm::radians(mainCamera.get_Zoom()), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+            glm::mat4 projection = mainCamera.get_Projection(WIDTH, HEIGHT);
             m_shader.setMat4("projection", projection);
             m_shader.setMat4("view", mainCamera.get_ViewMatrix());
             //TODO: support multi-light
@@ -78,10 +86,34 @@ namespace SRenderer
             mainCamera.move(Direction::Left, deltaTime);
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
             mainCamera.move(Direction::Right, deltaTime);
-        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
             mainCamera.move(Direction::Up, deltaTime);
-        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
             mainCamera.move(Direction::Down, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+            mainCamera.rotate(-2.0, 0.0);
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+            mainCamera.rotate(2.0, 0.0);
+    }
+
+    void SOpenGL::mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+    {
+        float xpos = static_cast<float>(xposIn);
+        float ypos = static_cast<float>(yposIn);
+        if (firstMouse)
+        {
+            lastX = xpos;
+            lastY = ypos;
+            firstMouse = false;
+        }
+
+        float xoffset = xpos - lastX;
+        float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+        lastX = xpos;
+        lastY = ypos;
+
+        mainCamera.rotate(xoffset, yoffset);
     }
 
     void SOpenGL::framebuffer_size_callback(GLFWwindow* window, int width, int height)

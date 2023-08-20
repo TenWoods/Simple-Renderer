@@ -12,8 +12,7 @@ namespace SRenderer
         NORMAL,
         BASE_COLOR,
         HEIGHT,
-        METALLIC,
-        ROUGHNESS,
+        METALLIC_ROUGHNESS,
         AO,
         Other
     };

@@ -6,6 +6,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <assimp/GltfMaterial.h>
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -36,6 +37,7 @@ namespace SRenderer
             {
                 mesh.draw(shader);
             }
+            //std::cout << std::endl << std::endl;
         }
 
     private:
@@ -84,7 +86,7 @@ namespace SRenderer
                 vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
                 if (mesh->mTangents != nullptr)
                 {
-                    std::cout << "Tangent" << std::endl;
+                    //std::cout << "Tangent" << std::endl;
                     vertex.tangent = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
                 }
                 //std::cout << vertex.position.x << ' ' << vertex.position.y << ' ' << vertex.position.z << std::endl;
@@ -112,14 +114,12 @@ namespace SRenderer
             if (mesh->mMaterialIndex >= 0)
             {
                 aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-                std::vector<Texture> baseColors = loadMaterialTextures(material, aiTextureType_DIFFUSE, TextureType::BASE_COLOR);
+                std::vector<Texture> baseColors = loadMaterialTextures(material, aiTextureType_BASE_COLOR, TextureType::BASE_COLOR);
                 textures.insert(textures.end(), baseColors.begin(), baseColors.end());
-                std::vector<Texture> normalMap = loadMaterialTextures(material, aiTextureType_HEIGHT, TextureType::NORMAL);
+                std::vector<Texture> normalMap = loadMaterialTextures(material, aiTextureType_NORMALS, TextureType::NORMAL);
                 textures.insert(textures.end(), normalMap.begin(), normalMap.end());
-                std::vector<Texture> metallicMap = loadMaterialTextures(material, aiTextureType_METALNESS, TextureType::METALLIC);
-                textures.insert(textures.end(), metallicMap.begin(), metallicMap.end());
-                std::vector<Texture> roughnessMap = loadMaterialTextures(material, aiTextureType_DIFFUSE_ROUGHNESS, TextureType::ROUGHNESS);
-                textures.insert(textures.end(), roughnessMap.begin(), roughnessMap.end());
+                std::vector<Texture> metallicRoughnessMap = loadMaterialTextures(material, aiTextureType_UNKNOWN, TextureType::METALLIC_ROUGHNESS);
+                textures.insert(textures.end(), metallicRoughnessMap.begin(), metallicRoughnessMap.end());
                 std::vector<Texture> aoMap = loadMaterialTextures(material, aiTextureType_AMBIENT_OCCLUSION, TextureType::AO);
                 textures.insert(textures.end(), aoMap.begin(), aoMap.end());
             }

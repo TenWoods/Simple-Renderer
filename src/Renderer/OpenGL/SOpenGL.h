@@ -13,19 +13,23 @@ namespace SRenderer
     {
     private:
         GLFWwindow* window;
-        const int WIDTH = 800;
-        const int HEIGHT = 600;
+        const int WIDTH = 1920;
+        const int HEIGHT = 1080;
         std::vector<std::shared_ptr<SObject>> scene_root;
         Shader m_shader;
         Camera mainCamera;
         std::vector<SLight> lights;
         float lastFrame;
         float deltaTime;
+        float lastX;
+        float lastY;
+        bool firstMouse;
     private:
         void initWindow();
         void renderLoop();
         void release();
         void processInput(GLFWwindow* window);
+        void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
         static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     public:
         SOpenGL();

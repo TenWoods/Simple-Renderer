@@ -5,12 +5,14 @@ namespace SRenderer
 {
     const float YAW         = -90.0f;
     const float PITCH       =  0.0f;
-    const float SPEED       =  2.5f;
+    const float SPEED       =  20.0f;
     const float SENSITIVITY =  0.1f;
     const float ZOOM        =  45.0f;
+    const float NEAR        =  0.1f;
+    const float FAR         =  1000.0f;
 
     Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) :
-    front(glm::vec3(0.0f, 0.0f, -1.0f)), moveSpeed(SPEED), mouseSensitivity(SENSITIVITY), zoom(ZOOM)
+    front(glm::vec3(0.0f, 0.0f, -1.0f)), moveSpeed(SPEED), mouseSensitivity(SENSITIVITY), zoom(ZOOM), near(NEAR), far(FAR)
     {
         this->position = position;
         worldUp = up;
@@ -20,7 +22,7 @@ namespace SRenderer
     }
 
     Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) :
-    front(glm::vec3(0.0f, 0.0f, -1.0f)), moveSpeed(SPEED), mouseSensitivity(SENSITIVITY), zoom(ZOOM)
+    front(glm::vec3(0.0f, 0.0f, -1.0f)), moveSpeed(SPEED), mouseSensitivity(SENSITIVITY), zoom(ZOOM), near(NEAR), far(FAR)
     {
         this->position = glm::vec3(posX, posY, posZ);
         worldUp = glm::vec3(upX, upY, upZ);
@@ -29,9 +31,34 @@ namespace SRenderer
         updateVector();
     }
 
+    void Camera::set_far(float value)
+    {
+        far = value;
+    }
+
+    float Camera::get_far() const
+    {
+        return far;
+    }
+
+    void Camera::set_near(float value)
+    {
+        near = value;
+    }
+
+    float Camera::get_near() const
+    {
+        return near;
+    }
+
     glm::mat4 Camera::get_ViewMatrix()
     {
         return glm::lookAt(position, position + front, up);
+    }
+
+    glm::mat4 Camera::get_Projection(int width, int height)
+    {
+        return glm::perspective(glm::radians(zoom), (float)width / (float)height, near, far);
     }
 
     void Camera::move(SRenderer::Direction dir, float deltaTime)

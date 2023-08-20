@@ -1,0 +1,17 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\3rd\\glad",
+    "\\3rd\\glad\\include",
+    "\\libs",
+    "\\libs\\win",
+    "\\resource",
+    "\\resource\\shaders",
+    "\\src",
+    "\\src\\objects",
+    "\\src\\Renderer",
+    "\\src\\util"
+  ],
+  "SelectedNode": "\\src\\glad.c",
+  "PreviewInSolutionExplorer": false
+}
