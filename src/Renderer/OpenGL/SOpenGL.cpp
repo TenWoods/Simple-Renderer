@@ -23,11 +23,6 @@ namespace SRenderer
         }
         glfwMakeContextCurrent(window);
         glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-        std::function<void(GLFWwindow*,double,double)>callback = [this](GLFWwindow* w, double x, double y)
-        {
-            mouse_callback(w, x, y);
-        };
-        //glfwSetCursorPosCallback(window, callback);
         if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
         {
             std::cout << "Failed to initialize GLAD" << std::endl;
@@ -38,9 +33,12 @@ namespace SRenderer
     {
         m_shader = Shader("../../resource/shaders/svertex.vert", "../../resource/shaders/sfragment.frag");
         addModel("../../resource/model/sponza/Sponza.gltf");
-        scene_root[0]->set_scale(glm::vec3(0.5f, 0.5f, 0.5f));
-        scene_root[0]->set_position(glm::vec3(1.0f, 0.0f, 0.0f));
-        addLight(SLight(glm::vec3(0.0, 5.0, 0.0), glm::vec3(1.0, 1.0, 1.0)));
+        addModel("../../resource/model/bottle/WaterBottle.gltf");
+        scene_root[0]->set_scale(glm::vec3(0.1f, 0.1f, 0.1f));
+        scene_root[0]->set_position(glm::vec3(0.0f, 0.0f, 0.0f));
+        scene_root[1]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
+        scene_root[1]->set_position(glm::vec3(0.0f, 10.0f, 0.0f));
+        addLight(SLight(glm::vec3(1.0, 20.0, 0.0), glm::vec3(255.0, 255.0, 255.0)));
         glEnable(GL_DEPTH_TEST);
         while (!glfwWindowShouldClose(window))
         {
@@ -55,9 +53,10 @@ namespace SRenderer
             glm::mat4 projection = mainCamera.get_Projection(WIDTH, HEIGHT);
             m_shader.setMat4("projection", projection);
             m_shader.setMat4("view", mainCamera.get_ViewMatrix());
-            //TODO: support multi-light
-            m_shader.setVec3("lightPos", lights[0].get_position());
+            m_shader.setVec3("cameraPos", mainCamera.get_Position());
+            set_light();
             //m_shader.setMat4("model", glm::mat4(1.0f));
+            //scene_root[1]->draw(m_shader);
             for (auto& object : scene_root)
             {
                 //std::cout << "Draw" << std::endl;
@@ -96,24 +95,14 @@ namespace SRenderer
             mainCamera.rotate(2.0, 0.0);
     }
 
-    void SOpenGL::mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+    void SOpenGL::set_light()
     {
-        float xpos = static_cast<float>(xposIn);
-        float ypos = static_cast<float>(yposIn);
-        if (firstMouse)
-        {
-            lastX = xpos;
-            lastY = ypos;
-            firstMouse = false;
-        }
-
-        float xoffset = xpos - lastX;
-        float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
-
-        lastX = xpos;
-        lastY = ypos;
-
-        mainCamera.rotate(xoffset, yoffset);
+        m_shader.use();
+        //TODO: support multi-light
+        m_shader.setVec3("lightPos", lights[0].get_position());
+        m_shader.setVec3("lightColor", lights[0].get_color());
+//        std::cout << lights[0].get_position().x << ',' << lights[0].get_position().y << ','  << lights[0].get_position().z;
+//        std::cout << lights[0].get_color().x << ',' << lights[0].get_color().y << ',' << lights[0].get_color().z << std::endl;
     }
 
     void SOpenGL::framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -121,7 +110,7 @@ namespace SRenderer
         glViewport(0, 0, width, height);
     }
 
-    SOpenGL::SOpenGL() : mainCamera(glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, 1.0, 0.0), 0.0f, 0.0f),
+    SOpenGL::SOpenGL() : mainCamera(glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 1.0, 0.0), 0.0f, 0.0f),
                          lastFrame(0.0), deltaTime(0.0)
 
     {

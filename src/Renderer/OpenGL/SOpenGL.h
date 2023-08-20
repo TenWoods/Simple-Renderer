@@ -29,7 +29,8 @@ namespace SRenderer
         void renderLoop();
         void release();
         void processInput(GLFWwindow* window);
-        void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
+        void set_light();
+    private:
         static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     public:
         SOpenGL();
