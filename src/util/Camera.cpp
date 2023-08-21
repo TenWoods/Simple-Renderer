@@ -61,6 +61,18 @@ namespace SRenderer
         return glm::perspective(glm::radians(zoom), (float)width / (float)height, near, far);
     }
 
+    glm::mat4 Camera::get_invView()
+    {
+        glm::mat4 view = get_ViewMatrix();
+        return glm::inverse(view);
+    }
+
+    glm::mat4 Camera::get_invProjection(int width, int height)
+    {
+        glm::mat4 projection = get_Projection(width, height);
+
+    }
+
     void Camera::move(SRenderer::Direction dir, float deltaTime)
     {
         float velocity = moveSpeed * deltaTime;

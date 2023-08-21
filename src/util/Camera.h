@@ -36,6 +36,10 @@ namespace SRenderer
         Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
         glm::mat4 get_ViewMatrix();
         glm::mat4 get_Projection(int width, int height);
+
+        glm::mat4 get_invProjection(int width, int height);
+        glm::mat4 get_invView();
+
         void move(Direction dir, float deltaTime);
         void rotate(float xoffset, float yoffset, GLboolean constrainPitch = true);
 
