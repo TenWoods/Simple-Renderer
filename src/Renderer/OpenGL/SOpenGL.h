@@ -17,6 +17,7 @@ namespace SRenderer
         const int HEIGHT = 1080;
         std::vector<std::shared_ptr<SObject>> scene_root;
         Shader m_shader;
+        Shader quad_shader;
         Camera mainCamera;
         std::vector<SLight> lights;
         float lastFrame;
@@ -30,6 +31,9 @@ namespace SRenderer
         void release();
         void processInput(GLFWwindow* window);
         void set_light();
+
+        void forwardRendering();
+        void deferredRendering();
     private:
         static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     public:

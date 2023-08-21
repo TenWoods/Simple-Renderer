@@ -1,6 +1,8 @@
 #version 440 core
 
-out vec4 FragColor;
+layout (location = 0) out vec4 ColorBuffer;
+layout (location = 1) out vec4 NormalBuffer;
+layout (location = 2) out float DepthBuffer;
 
 in VS_OUT
 {
@@ -21,13 +23,16 @@ uniform sampler2D AOMap;
 
 const float PI = 3.14159265359;
 
+float near = 0.1;
+float far  = 1000.0;
+
 vec3 getNormalFromMap()
 {
     vec3 tangentNormal = texture(NormalMap, fs_in.Texcoord).xyz * 2.0 - 1.0;
-//    vec3 Q1 = dFdx(fs_in.FragPos);
-//    vec3 Q2 = dFdy(fs_in.FragPos);
-//    vec2 st1 = dFdx(fs_in.Texcoord);
-//    vec2 st2 = dFdy(fs_in.Texcoord);
+    //    vec3 Q1 = dFdx(fs_in.FragPos);
+    //    vec3 Q2 = dFdy(fs_in.FragPos);
+    //    vec2 st1 = dFdx(fs_in.Texcoord);
+    //    vec2 st2 = dFdy(fs_in.Texcoord);
 
     vec3 N = normalize(fs_in.Normal);
     vec3 T = normalize(fs_in.Tangent);
@@ -35,6 +40,12 @@ vec3 getNormalFromMap()
     mat3 TBN = mat3(T, B, N);
 
     return normalize(TBN * tangentNormal);
+}
+
+float LinearizeDepth(float depth)
+{
+    float z = depth * 2.0 - 1.0; // back to NDC
+    return (2.0 * near * far) / (far + near - z * (far - near));
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -115,11 +126,15 @@ void main()
     F0 = mix(F0, baseColor, metallic);
     vec3 Lo = vec3(0.0);
 
+    float depth = LinearizeDepth(gl_FragCoord.z);
+
     Lo += calculate_point(baseColor, F0, viewDir, normal, metallic, roughness);
 
     vec3 ambient = vec3(0.03) * baseColor;
     vec3 color = ambient + Lo;
     color = pow(color, vec3(1.0/2.2));
 
-    FragColor = vec4(color, 1.0);
+    ColorBuffer = vec4(color, metallic);
+    NormalBuffer = vec4(normal, roughness);
+    DepthBuffer = depth;
 }
