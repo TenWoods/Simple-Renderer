@@ -70,7 +70,7 @@ namespace SRenderer
     glm::mat4 Camera::get_invProjection(int width, int height)
     {
         glm::mat4 projection = get_Projection(width, height);
-
+        return glm::inverse(projection);
     }
 
     void Camera::move(SRenderer::Direction dir, float deltaTime)

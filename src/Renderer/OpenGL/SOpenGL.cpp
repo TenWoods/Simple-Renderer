@@ -34,17 +34,19 @@ namespace SRenderer
 #ifdef __linux__
         m_shader = Shader("../resource/shaders/svertex.vert", "../resource/shaders/gbuffer.frag");
         quad_shader = Shader("../resource/shaders/deferred.vert", "../resource/shaders/deferred.frag");
+        addModel("../resource/model/Sponza/glTF/Sponza.gltf");
+        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
+#elif _WIN64
+        m_shader = Shader("../../resource/shaders/svertex.vert", "../../resource/shaders/gbuffer.frag");
+        quad_shader = Shader("../../resource/shaders/deferred.vert", "../../resource/shaders/deferred.frag");
+        addModel("../../resource/model/sponza/Sponza.gltf");
+        addModel("../../resource/model/bottle/WaterBottle.gltf");
+#endif
+        quad_shader.use();
         quad_shader.use();
         quad_shader.setInt("ColorBuffer", 0);
         quad_shader.setInt("NormalBuffer", 1);
         quad_shader.setInt("DepthBuffer", 2);
-        addModel("../resource/model/Sponza/glTF/Sponza.gltf");
-        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
-#elif _WIN64
-        m_shader = Shader("../../resource/shaders/svertex.vert", "../resource/shaders/sfragment.frag");
-        addModel("../../resource/model/Sponza/glTF/Sponza.gltf");
-        addModel("../../resource/model/WaterBottle/glTF/WaterBottle.gltf");
-#endif
         scene_root[0]->set_scale(glm::vec3(0.1f, 0.1f, 0.1f));
         scene_root[0]->set_position(glm::vec3(0.0f, 0.0f, 0.0f));
         scene_root[1]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
