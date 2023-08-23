@@ -178,9 +178,15 @@ namespace SRenderer
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             m_shader.use();
             glm::mat4 projection = mainCamera.get_Projection(WIDTH, HEIGHT);
+            glm::mat4 view = mainCamera.get_ViewMatrix();
             m_shader.setMat4("projection", projection);
-            m_shader.setMat4("view", mainCamera.get_ViewMatrix());
+            m_shader.setMat4("view", view);
             m_shader.setVec3("cameraPos", mainCamera.get_Position());
+            quad_shader.use();
+            quad_shader.setMat4("inverseProj", mainCamera.get_invProjection(WIDTH, HEIGHT));
+            quad_shader.setMat4("inverseView", mainCamera.get_invView());
+            quad_shader.setMat4("projection", projection);
+            quad_shader.setMat4("view", view);
             set_light();
             //m_shader.setMat4("model", glm::mat4(1.0f));
             //scene_root[1]->draw(m_shader);

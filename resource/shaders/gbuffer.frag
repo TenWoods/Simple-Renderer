@@ -126,7 +126,7 @@ void main()
     F0 = mix(F0, baseColor, metallic);
     vec3 Lo = vec3(0.0);
 
-    float depth = LinearizeDepth(gl_FragCoord.z);
+    float depth = gl_FragCoord.z;
 
     Lo += calculate_point(baseColor, F0, viewDir, normal, metallic, roughness);
 
