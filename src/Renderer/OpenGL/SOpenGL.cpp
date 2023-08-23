@@ -180,6 +180,7 @@ namespace SRenderer
             m_shader.setMat4("projection", projection);
             m_shader.setMat4("view", view);
             m_shader.setVec3("cameraPos", mainCamera.get_Position());
+            quad_shader.use();
             quad_shader.setMat4("inverseProj", mainCamera.get_invProjection(WIDTH, HEIGHT));
             quad_shader.setMat4("inverseView", mainCamera.get_invView());
             quad_shader.setMat4("projection", projection);
