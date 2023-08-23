@@ -12,7 +12,7 @@ namespace SRenderer
     const float FAR         =  1000.0f;
 
     Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) :
-    front(glm::vec3(0.0f, 0.0f, -1.0f)), moveSpeed(SPEED), mouseSensitivity(SENSITIVITY), zoom(ZOOM), near(NEAR), far(FAR)
+    front(glm::vec3(0.0f, 0.0f, 1.0f)), moveSpeed(SPEED), mouseSensitivity(SENSITIVITY), zoom(ZOOM), near(NEAR), far(FAR)
     {
         this->position = position;
         worldUp = up;

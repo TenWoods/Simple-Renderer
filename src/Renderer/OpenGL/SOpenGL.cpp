@@ -50,7 +50,7 @@ namespace SRenderer
         scene_root[0]->set_scale(glm::vec3(0.1f, 0.1f, 0.1f));
         scene_root[0]->set_position(glm::vec3(0.0f, 0.0f, 0.0f));
         scene_root[1]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
-        scene_root[1]->set_position(glm::vec3(0.0f, 10.0f, 0.0f));
+        scene_root[1]->set_position(glm::vec3(15.0f, 10.0f, 0.0f));
         addLight(SLight(glm::vec3(1.0, 20.0, 0.0), glm::vec3(255.0, 255.0, 255.0)));
         deferredRendering();
     }
@@ -98,7 +98,7 @@ namespace SRenderer
         glViewport(0, 0, width, height);
     }
 
-    SOpenGL::SOpenGL() : mainCamera(glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 1.0, 0.0), 0.0f, 0.0f),
+    SOpenGL::SOpenGL() : mainCamera(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0), 90.0f, 0.0f),
                          lastFrame(0.0), deltaTime(0.0)
 
     {
@@ -187,6 +187,7 @@ namespace SRenderer
             quad_shader.setMat4("inverseView", mainCamera.get_invView());
             quad_shader.setMat4("projection", projection);
             quad_shader.setMat4("view", view);
+            quad_shader.setFloat("time", glfwGetTime());
             set_light();
             //m_shader.setMat4("model", glm::mat4(1.0f));
             //scene_root[1]->draw(m_shader);
