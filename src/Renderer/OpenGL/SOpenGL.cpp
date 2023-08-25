@@ -43,10 +43,11 @@ namespace SRenderer
         addModel("../../resource/model/bottle/WaterBottle.gltf");
 #endif
         quad_shader.use();
-        quad_shader.use();
         quad_shader.setInt("ColorBuffer", 0);
         quad_shader.setInt("NormalBuffer", 1);
         quad_shader.setInt("DepthBuffer", 2);
+        quad_shader.setFloat("SCR_WIDTH", WIDTH);
+        quad_shader.setFloat("SCR_HEIGHT", HEIGHT);
         scene_root[0]->set_scale(glm::vec3(0.1f, 0.1f, 0.1f));
         scene_root[0]->set_position(glm::vec3(0.0f, 0.0f, 0.0f));
         scene_root[1]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
