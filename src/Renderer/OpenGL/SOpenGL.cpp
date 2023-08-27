@@ -41,17 +41,28 @@ namespace SRenderer
         quad_shader = Shader("../../resource/shaders/deferred.vert", "../../resource/shaders/deferred.frag");
         addModel("../../resource/model/sponza/Sponza.gltf");
         addModel("../../resource/model/bottle/WaterBottle.gltf");
+        addModel("../../resource/model/bottle/WaterBottle.gltf");
+        addModel("../../resource/model/bottle/WaterBottle.gltf");
+        addModel("../../resource/model/bottle/WaterBottle.gltf");
+        addModel("../../resource/model/bottle/WaterBottle.gltf");
+
 #endif
         quad_shader.use();
         quad_shader.setInt("ColorBuffer", 0);
         quad_shader.setInt("NormalBuffer", 1);
         quad_shader.setInt("DepthBuffer", 2);
-        quad_shader.setFloat("SCR_WIDTH", WIDTH);
-        quad_shader.setFloat("SCR_HEIGHT", HEIGHT);
         scene_root[0]->set_scale(glm::vec3(0.1f, 0.1f, 0.1f));
         scene_root[0]->set_position(glm::vec3(0.0f, 0.0f, 0.0f));
         scene_root[1]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
-        scene_root[1]->set_position(glm::vec3(15.0f, 10.0f, 0.0f));
+        scene_root[1]->set_position(glm::vec3(0.0f, 6.0f, 0.0f));
+        scene_root[2]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
+        scene_root[2]->set_position(glm::vec3(15.0f, 6.0f, 0.0f));
+        scene_root[3]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
+        scene_root[3]->set_position(glm::vec3(-15.0f, 6.0f, 0.0f));
+        scene_root[4]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
+        scene_root[4]->set_position(glm::vec3(0.0f, 6.0f, 10.0f));
+        scene_root[5]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
+        scene_root[5]->set_position(glm::vec3(15.0f, 6.0f, -10.0f));
         addLight(SLight(glm::vec3(1.0, 20.0, 0.0), glm::vec3(255.0, 255.0, 255.0)));
         deferredRendering();
     }
@@ -99,7 +110,7 @@ namespace SRenderer
         glViewport(0, 0, width, height);
     }
 
-    SOpenGL::SOpenGL() : mainCamera(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0), 90.0f, 0.0f),
+    SOpenGL::SOpenGL() : mainCamera(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0), 0.0f, 0.0f),
                          lastFrame(0.0), deltaTime(0.0)
 
     {
@@ -167,6 +178,8 @@ namespace SRenderer
             std::cout << "Framebuffer not complete!" << std::endl;
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
         while (!glfwWindowShouldClose(window))
         {
             float currentFrame = static_cast<float>(glfwGetTime());

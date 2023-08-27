@@ -7,6 +7,7 @@ layout (location = 2) out float DepthBuffer;
 in VS_OUT
 {
     vec3 FragPos;
+    vec4 ClipPos;
     vec3 Normal;
     vec3 Tangent;
     vec2 Texcoord;
@@ -126,7 +127,8 @@ void main()
     F0 = mix(F0, baseColor, metallic);
     vec3 Lo = vec3(0.0);
 
-    float depth = gl_FragCoord.z;
+
+    float depth = fs_in.ClipPos.z / fs_in.ClipPos.w;
 
     Lo += calculate_point(baseColor, F0, viewDir, normal, metallic, roughness);
 
