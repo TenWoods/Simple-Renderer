@@ -87,7 +87,7 @@ void main()
     vec4 viewPos = inverseProj * vec4(ndcPos, 1.0);
     viewPos /= viewPos.w;
     vec3 reflectDir = normalize(reflect(viewPos.xyz, viewNormal));
-    const int MAX_STEP = 100;
+    const int MAX_STEP = 1000;
     vec3 rayColor = RayMarching(viewPos.xyz, reflectDir, MAX_STEP);
     color.xyz += rayColor*0.5;
     FragColor = vec4(color.xyz, 1.0);
