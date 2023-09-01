@@ -16,7 +16,7 @@ const float minRayStep = 0.1;
 const int  numBinarySearchSteps = 5;
 const float reflectionSpecularFalloffExponent = 3.0;
 const float MAX_THICKNESS = 0.001;
-const int MAX_STEP = 1000;
+const int MAX_STEP = 10000;
 const float STEP_SIZE = 0.4;
 const int MAX_SEARCH = 5;
 

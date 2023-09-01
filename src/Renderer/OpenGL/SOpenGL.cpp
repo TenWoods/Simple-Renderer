@@ -33,7 +33,7 @@ namespace SRenderer
     {
 #ifdef __linux__
         m_shader = Shader("../resource/shaders/svertex.vert", "../resource/shaders/gbuffer.frag");
-        quad_shader = Shader("../resource/shaders/deferred.vert", "../resource/shaders/deferred.frag");
+        quad_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/ssr.frag");
         addModel("../resource/model/Sponza/glTF/Sponza.gltf");
         addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
         addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
@@ -229,6 +229,7 @@ namespace SRenderer
             glBindVertexArray(0);
             glfwSwapBuffers(window);
             glfwPollEvents();
+            std::cout << "FPS: " << 1.0 / deltaTime << std::endl;
         }
     }
 
