@@ -40,7 +40,6 @@ namespace SRenderer
         addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
         addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
         addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
-        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 #elif _WIN64
         m_shader = Shader("../../resource/shaders/svertex.vert", "../../resource/shaders/gbuffer.frag");
         quad_shader = Shader("../../resource/shaders/deferred.vert", "../../resource/shaders/deferred.frag");

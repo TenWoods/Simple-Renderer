@@ -128,7 +128,7 @@ void main()
     vec3 Lo = vec3(0.0);
 
 
-    float depth = fs_in.ClipPos.z / fs_in.ClipPos.w;
+    float depth = gl_FragCoord.z;
 
     Lo += calculate_point(baseColor, F0, viewDir, normal, metallic, roughness);
 
