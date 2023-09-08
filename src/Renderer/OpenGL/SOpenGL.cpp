@@ -33,6 +33,7 @@ namespace SRenderer
     {
 #ifdef __linux__
         m_shader = Shader("../resource/shaders/svertex.vert", "../resource/shaders/gbuffer.frag");
+        preCompute_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/hizbuffer.frag");
         quad_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/ssr.frag");
         addModel("../resource/model/Sponza/glTF/Sponza.gltf");
         addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
@@ -140,7 +141,6 @@ namespace SRenderer
                 1.0f, -1.0f,  1.0f, 0.0f,
                 1.0f,  1.0f,  1.0f, 1.0f
         };
-        unsigned int quadVAO, quadVBO;
         glGenVertexArrays(1, &quadVAO);
         glGenBuffers(1, &quadVBO);
         glBindVertexArray(quadVAO);
@@ -151,10 +151,10 @@ namespace SRenderer
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
-        unsigned int deferredFrameBuffer;
+
         glGenFramebuffers(1, &deferredFrameBuffer);
         glBindFramebuffer(GL_FRAMEBUFFER, deferredFrameBuffer);
-        unsigned int GBuffer[3];
+
         glGenTextures(3, GBuffer);
         for (int i = 0; i < 2; i++)
         {
@@ -191,45 +191,64 @@ namespace SRenderer
             lastFrame = currentFrame;
             glfwPollEvents();
             processInput(window);
-            glBindFramebuffer(GL_FRAMEBUFFER, deferredFrameBuffer);
-            glClearColor(1.0, 1.0, 1.0, 1.0);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            m_shader.use();
-            glm::mat4 projection = mainCamera.get_Projection(WIDTH, HEIGHT);
-            glm::mat4 view = mainCamera.get_ViewMatrix();
-            m_shader.setMat4("projection", projection);
-            m_shader.setMat4("view", view);
-            m_shader.setVec3("cameraPos", mainCamera.get_Position());
-            quad_shader.use();
-            quad_shader.setMat4("inverseProj", mainCamera.get_invProjection(WIDTH, HEIGHT));
-            quad_shader.setMat4("inverseView", mainCamera.get_invView());
-            quad_shader.setMat4("projection", projection);
-            quad_shader.setMat4("view", view);
-            quad_shader.setFloat("time", glfwGetTime());
-            set_light();
-            //m_shader.setMat4("model", glm::mat4(1.0f));
-            //scene_root[1]->draw(m_shader);
-            for (auto& object : scene_root)
-            {
-                //std::cout << "Draw" << std::endl;
-                object->draw(m_shader);
-            }
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glClearColor(1.0, 1.0, 1.0, 1.0);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            quad_shader.use();
-            for (int i = 0; i < 3; i++)
-            {
-                glActiveTexture(GL_TEXTURE0 + i);
-                glBindTexture(GL_TEXTURE_2D, GBuffer[i]);
-            }
-            glBindVertexArray(quadVAO);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-            glBindVertexArray(0);
+
+            genGbuffer();
+
+            postRendering();
+
             glfwSwapBuffers(window);
             glfwPollEvents();
             std::cout << "FPS: " << 1.0 / deltaTime << std::endl;
         }
+    }
+
+    void SOpenGL::genGbuffer()
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, deferredFrameBuffer);
+        glClearColor(1.0, 1.0, 1.0, 1.0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        m_shader.use();
+        glm::mat4 projection = mainCamera.get_Projection(WIDTH, HEIGHT);
+        glm::mat4 view = mainCamera.get_ViewMatrix();
+        m_shader.setMat4("projection", projection);
+        m_shader.setMat4("view", view);
+        m_shader.setVec3("cameraPos", mainCamera.get_Position());
+        quad_shader.use();
+        quad_shader.setMat4("inverseProj", mainCamera.get_invProjection(WIDTH, HEIGHT));
+        quad_shader.setMat4("inverseView", mainCamera.get_invView());
+        quad_shader.setMat4("projection", projection);
+        quad_shader.setMat4("view", view);
+        quad_shader.setFloat("time", glfwGetTime());
+        set_light();
+        //m_shader.setMat4("model", glm::mat4(1.0f));
+        //scene_root[1]->draw(m_shader);
+        for (auto& object : scene_root)
+        {
+            //std::cout << "Draw" << std::endl;
+            object->draw(m_shader);
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClearColor(1.0, 1.0, 1.0, 1.0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+
+    void SOpenGL::genHizbuffer()
+    {
+        preCompute_shader.use();
+
+    }
+
+    void SOpenGL::postRendering()
+    {
+        quad_shader.use();
+        for (int i = 0; i < 3; i++)
+        {
+            glActiveTexture(GL_TEXTURE0 + i);
+            glBindTexture(GL_TEXTURE_2D, GBuffer[i]);
+        }
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
     }
 
     void SOpenGL::forwardRendering()

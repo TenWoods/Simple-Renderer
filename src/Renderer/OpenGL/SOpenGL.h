@@ -18,6 +18,7 @@ namespace SRenderer
         std::vector<std::shared_ptr<SObject>> scene_root;
         Shader m_shader;
         Shader quad_shader;
+        Shader preCompute_shader;
         Camera mainCamera;
         std::vector<SLight> lights;
         float lastFrame;
@@ -25,6 +26,10 @@ namespace SRenderer
         float lastX;
         float lastY;
         bool firstMouse;
+
+        unsigned int deferredFrameBuffer;
+        unsigned int quadVAO, quadVBO;
+        unsigned int GBuffer[3];
     private:
         void initWindow();
         void renderLoop();
@@ -34,6 +39,10 @@ namespace SRenderer
 
         void forwardRendering();
         void deferredRendering();
+
+        void genGbuffer();
+        void genHizbuffer();
+        void postRendering();
     private:
         static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     public:
