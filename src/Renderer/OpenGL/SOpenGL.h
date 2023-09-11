@@ -27,7 +27,8 @@ namespace SRenderer
         float lastY;
         bool firstMouse;
 
-        unsigned int deferredFrameBuffer;
+        unsigned int postFBO;
+        unsigned int hizFBO;
         unsigned int quadVAO, quadVBO;
         unsigned int GBuffer[3];
     private:

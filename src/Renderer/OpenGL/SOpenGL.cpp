@@ -151,9 +151,9 @@ namespace SRenderer
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
-
-        glGenFramebuffers(1, &deferredFrameBuffer);
-        glBindFramebuffer(GL_FRAMEBUFFER, deferredFrameBuffer);
+        //init postFBO
+        glGenFramebuffers(1, &postFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, postFBO);
 
         glGenTextures(3, GBuffer);
         for (int i = 0; i < 2; i++)
@@ -181,6 +181,14 @@ namespace SRenderer
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             std::cout << "Framebuffer not complete!" << std::endl;
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        //init hizFBO
+        glGenFramebuffers(1, &hizFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, hizFBO);
+
+
+
+
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
@@ -194,7 +202,9 @@ namespace SRenderer
 
             genGbuffer();
 
-            postRendering();
+            genHizbuffer();
+
+            //postRendering();
 
             glfwSwapBuffers(window);
             glfwPollEvents();
@@ -204,7 +214,7 @@ namespace SRenderer
 
     void SOpenGL::genGbuffer()
     {
-        glBindFramebuffer(GL_FRAMEBUFFER, deferredFrameBuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, postFBO);
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         m_shader.use();
@@ -235,7 +245,12 @@ namespace SRenderer
     void SOpenGL::genHizbuffer()
     {
         preCompute_shader.use();
-
+        // bind depth buffer
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, GBuffer[2]);
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
     }
 
     void SOpenGL::postRendering()
