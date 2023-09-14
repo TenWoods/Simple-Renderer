@@ -22,6 +22,7 @@ namespace SRenderer
         Model(const std::string& path) : meshes(), loaded_textures()
         {
             loadModel(path);
+
         }
 
         void draw(const Shader& shader) override

@@ -36,7 +36,7 @@ namespace SRenderer
         preCompute_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/hizbuffer.frag");
         quad_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/ssr.frag");
         addModel("../resource/model/Sponza/glTF/Sponza.gltf");
-        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
+        addModel("../resource/model/FlightHelmet/glTF/FlightHelmet.gltf");
         addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
         addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
         addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
@@ -58,7 +58,7 @@ namespace SRenderer
         quad_shader.setInt("DepthBuffer", 2);
         scene_root[0]->set_scale(glm::vec3(0.1f, 0.1f, 0.1f));
         scene_root[0]->set_position(glm::vec3(0.0f, 0.0f, 0.0f));
-        scene_root[1]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
+        scene_root[1]->set_scale(glm::vec3(10.0f, 10.0f, 10.0f));
         scene_root[1]->set_position(glm::vec3(0.0f, 6.0f, 0.0f));
         scene_root[2]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
         scene_root[2]->set_position(glm::vec3(15.0f, 6.0f, 0.0f));
@@ -183,10 +183,8 @@ namespace SRenderer
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         //init hizFBO
-        glGenFramebuffers(1, &hizFBO);
-        glBindFramebuffer(GL_FRAMEBUFFER, hizFBO);
-
-
+//        glGenFramebuffers(1, &hizFBO);
+//        glBindFramebuffer(GL_FRAMEBUFFER, hizFBO);
 
 
         glEnable(GL_DEPTH_TEST);
@@ -202,9 +200,9 @@ namespace SRenderer
 
             genGbuffer();
 
-            genHizbuffer();
+            //genHizbuffer();
 
-            //postRendering();
+            postRendering();
 
             glfwSwapBuffers(window);
             glfwPollEvents();
