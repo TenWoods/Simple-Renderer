@@ -71,7 +71,6 @@ namespace SRenderer
 //        scene_root[4]->set_position(glm::vec3(0.0f, 6.0f, 10.0f));
 //        scene_root[5]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
 //        scene_root[5]->set_position(glm::vec3(15.0f, 6.0f, -10.0f));
-
         addLight(SLight(glm::vec3(1.0, 20.0, 0.0), glm::vec3(255.0, 255.0, 255.0)));
 
         deferredRendering();
@@ -225,7 +224,7 @@ namespace SRenderer
 
             genGbuffer();
 
-            genHizbuffer();
+            //genHizbuffer();
 
             postRendering();
 
