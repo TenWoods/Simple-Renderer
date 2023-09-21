@@ -31,6 +31,7 @@ namespace SRenderer
         unsigned int hizFBO;
         unsigned int quadVAO, quadVBO;
         unsigned int GBuffer[3];
+        int levelsCount;
     private:
         void initWindow();
         void renderLoop();

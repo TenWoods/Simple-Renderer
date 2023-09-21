@@ -78,6 +78,11 @@ namespace SRenderer
         glUniform2fv(glGetUniformLocation(id, name.c_str()), 1, &value[0]);
     }
 
+    void Shader::setVec2i(const std::string& name, glm::ivec2 value) const
+    {
+        glUniform2iv(glGetUniformLocation(id, name.c_str()), 1, &value[0]);
+    }
+
     void Shader::setVec3(const std::string &name, glm::vec3 value) const
     {
         glUniform3fv(glGetUniformLocation(id, name.c_str()), 1, &value[0]);

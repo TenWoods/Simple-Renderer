@@ -36,39 +36,44 @@ namespace SRenderer
         preCompute_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/hizbuffer.frag");
         quad_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/ssr.frag");
         addModel("../resource/model/Sponza/glTF/Sponza.gltf");
-        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
+        addModel("../resource/model/FlightHelmet/glTF/FlightHelmet.gltf");
         addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
         addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
         addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
         addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 #elif _WIN64
         m_shader = Shader("../../resource/shaders/svertex.vert", "../../resource/shaders/gbuffer.frag");
-        quad_shader = Shader("../../resource/shaders/deferred.vert", "../../resource/shaders/deferred.frag");
+        preCompute_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hizbuffer.frag");
+        quad_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/ssr.frag");
         addModel("../../resource/model/sponza/Sponza.gltf");
-        addModel("../../resource/model/bottle/WaterBottle.gltf");
-        addModel("../../resource/model/bottle/WaterBottle.gltf");
-        addModel("../../resource/model/bottle/WaterBottle.gltf");
-        addModel("../../resource/model/bottle/WaterBottle.gltf");
-        addModel("../../resource/model/bottle/WaterBottle.gltf");
+//        addModel("../../resource/model/bottle/WaterBottle.gltf");
+//        addModel("../../resource/model/bottle/WaterBottle.gltf");
+//        addModel("../../resource/model/bottle/WaterBottle.gltf");
+//        addModel("../../resource/model/bottle/WaterBottle.gltf");
+//        addModel("../../resource/model/bottle/WaterBottle.gltf");
 
 #endif
         quad_shader.use();
         quad_shader.setInt("ColorBuffer", 0);
         quad_shader.setInt("NormalBuffer", 1);
         quad_shader.setInt("DepthBuffer", 2);
+        preCompute_shader.use();
+        preCompute_shader.setInt("Depthmap", 0);
         scene_root[0]->set_scale(glm::vec3(0.1f, 0.1f, 0.1f));
         scene_root[0]->set_position(glm::vec3(0.0f, 0.0f, 0.0f));
-        scene_root[1]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
-        scene_root[1]->set_position(glm::vec3(0.0f, 6.0f, 0.0f));
-        scene_root[2]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
-        scene_root[2]->set_position(glm::vec3(15.0f, 6.0f, 0.0f));
-        scene_root[3]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
-        scene_root[3]->set_position(glm::vec3(-15.0f, 6.0f, 0.0f));
-        scene_root[4]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
-        scene_root[4]->set_position(glm::vec3(0.0f, 6.0f, 10.0f));
-        scene_root[5]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
-        scene_root[5]->set_position(glm::vec3(15.0f, 6.0f, -10.0f));
+//        scene_root[1]->set_scale(glm::vec3(10.0f, 10.0f, 10.0f));
+//        scene_root[1]->set_position(glm::vec3(0.0f, 6.0f, 0.0f));
+//        scene_root[2]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
+//        scene_root[2]->set_position(glm::vec3(15.0f, 6.0f, 0.0f));
+//        scene_root[3]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
+//        scene_root[3]->set_position(glm::vec3(-15.0f, 6.0f, 0.0f));
+//        scene_root[4]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
+//        scene_root[4]->set_position(glm::vec3(0.0f, 6.0f, 10.0f));
+//        scene_root[5]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
+//        scene_root[5]->set_position(glm::vec3(15.0f, 6.0f, -10.0f));
+
         addLight(SLight(glm::vec3(1.0, 20.0, 0.0), glm::vec3(255.0, 255.0, 255.0)));
+
         deferredRendering();
     }
 
@@ -156,6 +161,7 @@ namespace SRenderer
         glBindFramebuffer(GL_FRAMEBUFFER, postFBO);
 
         glGenTextures(3, GBuffer);
+        //Generate Color and Normal buffer
         for (int i = 0; i < 2; i++)
         {
             glBindTexture(GL_TEXTURE_2D, GBuffer[i]);
@@ -164,11 +170,21 @@ namespace SRenderer
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, GBuffer[i], 0);
         }
+        //Generate Depth buffer
+        levelsCount = 1 + (int)floorf(log2f(fmaxf(WIDTH, HEIGHT)));
         glBindTexture(GL_TEXTURE_2D, GBuffer[2]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, WIDTH, HEIGHT, 0, GL_RED, GL_FLOAT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levelsCount - 1);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        //std::cout << "Generate mip map" << std::endl;
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, GBuffer[2], 0);
+
         unsigned int attachments[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
         glDrawBuffers(3, attachments);
 
@@ -180,14 +196,21 @@ namespace SRenderer
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             std::cout << "Framebuffer not complete!" << std::endl;
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         //init hizFBO
         glGenFramebuffers(1, &hizFBO);
-        glBindFramebuffer(GL_FRAMEBUFFER, hizFBO);
+//        glGenTextures(1, &mipmap);
+//        glBindTexture(GL_TEXTURE_2D, mipmap);
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, WIDTH/2, HEIGHT/2, 0, GL_RED, GL_FLOAT, nullptr);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//        glGenerateTextureMipmap(GL_TEXTURE_2D);
+        //glBindFramebuffer(GL_FRAMEBUFFER, hizFBO);
+        //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
 
-
-
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
@@ -204,11 +227,11 @@ namespace SRenderer
 
             genHizbuffer();
 
-            //postRendering();
+            postRendering();
 
             glfwSwapBuffers(window);
             glfwPollEvents();
-            std::cout << "FPS: " << 1.0 / deltaTime << std::endl;
+            //std::cout << "FPS: " << 1.0 / deltaTime << std::endl;
         }
     }
 
@@ -223,12 +246,6 @@ namespace SRenderer
         m_shader.setMat4("projection", projection);
         m_shader.setMat4("view", view);
         m_shader.setVec3("cameraPos", mainCamera.get_Position());
-        quad_shader.use();
-        quad_shader.setMat4("inverseProj", mainCamera.get_invProjection(WIDTH, HEIGHT));
-        quad_shader.setMat4("inverseView", mainCamera.get_invView());
-        quad_shader.setMat4("projection", projection);
-        quad_shader.setMat4("view", view);
-        quad_shader.setFloat("time", glfwGetTime());
         set_light();
         //m_shader.setMat4("model", glm::mat4(1.0f));
         //scene_root[1]->draw(m_shader);
@@ -238,29 +255,59 @@ namespace SRenderer
             object->draw(m_shader);
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glClearColor(1.0, 1.0, 1.0, 1.0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
     void SOpenGL::genHizbuffer()
     {
+        glBindFramebuffer(GL_FRAMEBUFFER, hizFBO);
+        glDepthMask(GL_FALSE);
+        int lastWidth = WIDTH;
+        int lastHeight = HEIGHT;
+
         preCompute_shader.use();
+
         // bind depth buffer
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, GBuffer[2]);
-        glBindVertexArray(quadVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        glBindVertexArray(0);
+
+        for (int i = 1; i < levelsCount; i++)
+        {
+            //glClearColor(0.0, 0.0, 0.0, 1.0);
+            //glClear(GL_COLOR_BUFFER_BIT);
+            preCompute_shader.setVec2i("previousDim", glm::ivec2(lastWidth, lastHeight));
+            preCompute_shader.setInt("previousLevel", i-1);
+            lastWidth /= 2;
+            lastHeight /= 2;
+            lastWidth = lastWidth > 0 ? lastWidth : 1;
+            lastHeight = lastHeight > 0 ? lastHeight : 1;
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, GBuffer[2], i);
+            glBindVertexArray(quadVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glBindVertexArray(0);
+        }
+        glDepthMask(GL_TRUE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     void SOpenGL::postRendering()
     {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClearColor(1.0, 1.0, 1.0, 1.0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         quad_shader.use();
+        quad_shader.setMat4("inverseProj", mainCamera.get_invProjection(WIDTH, HEIGHT));
+        quad_shader.setMat4("inverseView", mainCamera.get_invView());
+        quad_shader.setMat4("projection", mainCamera.get_Projection(WIDTH, HEIGHT));
+        quad_shader.setMat4("view", mainCamera.get_ViewMatrix());
+        quad_shader.setFloat("time", glfwGetTime());
         for (int i = 0; i < 3; i++)
         {
             glActiveTexture(GL_TEXTURE0 + i);
             glBindTexture(GL_TEXTURE_2D, GBuffer[i]);
         }
+        //glGenerateTextureMipmap(GBuffer[2]);
+//        glActiveTexture(GL_TEXTURE0 + 2);
+//        glBindTexture(GL_TEXTURE_2D, mipmap);
         glBindVertexArray(quadVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
@@ -276,8 +323,8 @@ namespace SRenderer
             lastFrame = currentFrame;
             glfwPollEvents();
             processInput(window);
-            glClearColor(1.0, 1.0, 1.0, 1.0);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            //glClearColor(1.0, 1.0, 1.0, 1.0);
+            //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             m_shader.use();
             glm::mat4 projection = mainCamera.get_Projection(WIDTH, HEIGHT);
             m_shader.setMat4("projection", projection);
