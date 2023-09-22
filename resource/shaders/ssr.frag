@@ -87,7 +87,8 @@ void main()
 //    }
     float roughness = color.a;
     vec2 screenPos = Texcoord * 2.0 - 1.0;
-    float depth = textureLod(DepthBuffer, Texcoord, 0).x;
+    float depth = textureLod(DepthBuffer, Texcoord, 2.0).x;
+    vec3 depthColor = vec3(depth, 0.0, 0.0);
     vec3 ndcPos = vec3(screenPos, depth);
     vec4 viewPos = inverseProj * vec4(ndcPos, 1.0);
     viewPos /= viewPos.w;
@@ -96,5 +97,5 @@ void main()
 
     //color.xyz = mix(color.xyz, rayColor, roughness);
     //FragColor = vec4(color.xyz, 1.0);
-    FragColor = vec4(depth, depth, depth, 1.0);
+    FragColor = vec4(depthColor, 1.0);
 }

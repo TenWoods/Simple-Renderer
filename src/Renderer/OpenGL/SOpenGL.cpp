@@ -36,11 +36,11 @@ namespace SRenderer
         preCompute_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/hizbuffer.frag");
         quad_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/ssr.frag");
         addModel("../resource/model/Sponza/glTF/Sponza.gltf");
-        addModel("../resource/model/FlightHelmet/glTF/FlightHelmet.gltf");
-        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
-        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
-        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
-        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
+//        addModel("../resource/model/FlightHelmet/glTF/FlightHelmet.gltf");
+//        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
+//        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
+//        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
+//        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 #elif _WIN64
         m_shader = Shader("../../resource/shaders/svertex.vert", "../../resource/shaders/gbuffer.frag");
         preCompute_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hizbuffer.frag");
@@ -175,8 +175,8 @@ namespace SRenderer
         glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, WIDTH, HEIGHT, 0, GL_RED, GL_FLOAT, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levelsCount - 1);
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -224,7 +224,7 @@ namespace SRenderer
 
             genGbuffer();
 
-            //genHizbuffer();
+            genHizbuffer();
 
             postRendering();
 
@@ -294,6 +294,9 @@ namespace SRenderer
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         quad_shader.use();
+        quad_shader.setInt("ColorBuffer", 0);
+        quad_shader.setInt("NormalBuffer", 1);
+        quad_shader.setInt("DepthBuffer", 2);
         quad_shader.setMat4("inverseProj", mainCamera.get_invProjection(WIDTH, HEIGHT));
         quad_shader.setMat4("inverseView", mainCamera.get_invView());
         quad_shader.setMat4("projection", mainCamera.get_Projection(WIDTH, HEIGHT));
@@ -304,9 +307,7 @@ namespace SRenderer
             glActiveTexture(GL_TEXTURE0 + i);
             glBindTexture(GL_TEXTURE_2D, GBuffer[i]);
         }
-        //glGenerateTextureMipmap(GBuffer[2]);
-//        glActiveTexture(GL_TEXTURE0 + 2);
-//        glBindTexture(GL_TEXTURE_2D, mipmap);
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
         glBindVertexArray(quadVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
