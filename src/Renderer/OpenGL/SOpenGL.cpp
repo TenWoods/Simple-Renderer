@@ -242,6 +242,15 @@ namespace SRenderer
         m_shader.use();
         glm::mat4 projection = mainCamera.get_Projection(WIDTH, HEIGHT);
         glm::mat4 view = mainCamera.get_ViewMatrix();
+        //glm::mat4 one(1.0);
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                std::cout << projection[j][i] << ' ';
+            }
+            std::cout << std::endl;
+        }
         m_shader.setMat4("projection", projection);
         m_shader.setMat4("view", view);
         m_shader.setVec3("cameraPos", mainCamera.get_Position());

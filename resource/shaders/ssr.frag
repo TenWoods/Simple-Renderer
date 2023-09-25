@@ -19,6 +19,8 @@ const float MAX_THICKNESS = 0.001;
 const int MAX_STEP = 10000;
 const float STEP_SIZE = 0.4;
 const int MAX_SEARCH = 5;
+const float width = 1920.0;
+const float height = 1080.0;
 
 bool rayIsOutofScreen(vec2 ray)
 {
@@ -46,6 +48,88 @@ vec3 BinarySearch(vec3 origin, vec3 direction)
         sign = rayDepth - rayInScreen.z > 0.0 ? 1.0 : -1.0;
     }
     return rayPos;
+}
+
+float DistanceSquared(vec2 A, vec2 B)
+{
+    A -= B;
+    return dot(A, A);
+}
+
+vec3 RayMarching2D(vec3 origin, vec3 dierction, int maxStep)
+{
+    vec3 result = vec3(0.0);
+    vec3 start = origin;
+    vec3 end = origin + maxStep * dierction;
+
+    vec4 H0 = projection * vec4(start, 1.0);
+    vec4 H1 = projection * vec4(end, 1.0);
+
+    float k0 = 1.0 / H0.w;
+    float k1 = 1.0 / H1.w;
+
+    vec3 Q0 = start * k0;
+    vec3 Q1 = end * k1;
+
+    vec2 P0 = H0.xy * k0;
+    vec2 p1 = H1.xy * k1;
+    P0 = (P0 + 1) / 2 * vec2(width, height);
+    P1 = (P1 + 1) / 2 * vec2(width, height);
+    P1 += vec2(DistanceSquared(P0, P1) < 0.0001 ? 0.01 : 0.0);
+    vec2 delta = P1 - P0;
+
+    bool permute = false;
+
+    if (abs(delta.x) < abs(delta.y))
+    {
+        permute = true;
+        delta = delta.yx;
+        P0 = P0.yx;
+        P1 = P1.yx;
+    }
+
+    float stepDir = sign(delta.x);
+    float invDx = stepDir / delta.x;
+
+    vec2 dP = vec2(stepDir, delta.y * invDx);
+    vec3 dQ = (Q1 - Q0) * invDx;
+    float dk = (k1 - k0) * invDx;
+
+    P0 += dP;
+    Q0 += dQ;
+    k0 += dk;
+
+    int step = 0;
+    float k = k0;
+    float endX = P1.x * stepDir;
+    vec3 Q = Q0;
+    float prevMaxEstimate = start.z;
+
+    vec2 uv;
+    bool isHit;
+
+    for (vec2 P = P0; step < maxStep; step++, P += dP, Q.z += dQ.z, k += dk)
+    {
+        uv = permute ? P.yx : P;
+        float rayZmin = prevMaxEstimate;
+        float rayZmax = (dQ.z * 0.5 + Q.z) / (dk * 0.5 + k);
+        prevMaxEstimate = rayZmax;
+        if (rayZmin > rayZmax)
+        {
+            float temp = rayZmin;
+            rayZmin = rayZmax;
+            rayZmax = temp;
+        }
+        if (uv.x > width || uv.y > height || uv.x < 0 || uv.y < 0)
+            break;
+        float bufferDepth = texture(DepthBuffer, uv/vec2(width, height)).r;
+        if (rayZmin > bufferDepth && rayZmax < bufferDepth)
+        {
+            result = texture(ColorBuffer, uv/vec2(width, height));
+            break;
+        }
+    }
+    return result;
 }
 
 vec3 RayMarching(vec3 origin, vec3 direction, int maxStep)
@@ -87,7 +171,7 @@ void main()
 //    }
     float roughness = color.a;
     vec2 screenPos = Texcoord * 2.0 - 1.0;
-    float depth = textureLod(DepthBuffer, Texcoord, 2.0).x;
+    float depth = textureLod(DepthBuffer, Texcoord, 5.0).x;
     vec3 depthColor = vec3(depth, 0.0, 0.0);
     vec3 ndcPos = vec3(screenPos, depth);
     vec4 viewPos = inverseProj * vec4(ndcPos, 1.0);
