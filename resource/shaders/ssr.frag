@@ -16,11 +16,11 @@ const float minRayStep = 0.1;
 const int  numBinarySearchSteps = 5;
 const float reflectionSpecularFalloffExponent = 3.0;
 const float MAX_THICKNESS = 0.001;
-const int MAX_STEP = 10000;
+const int MAX_STEP = 100000;
 const float STEP_SIZE = 0.4;
 const int MAX_SEARCH = 5;
-const float width = 1920.0;
-const float height = 1080.0;
+const int width = 1920;
+const int height = 1080;
 
 bool rayIsOutofScreen(vec2 ray)
 {
@@ -59,20 +59,29 @@ float DistanceSquared(vec2 A, vec2 B)
 vec3 RayMarching2D(vec3 origin, vec3 dierction, int maxStep)
 {
     vec3 result = vec3(0.0);
+    //view space
     vec3 start = origin;
     vec3 end = origin + maxStep * dierction;
-
+    //clip space
     vec4 H0 = projection * vec4(start, 1.0);
     vec4 H1 = projection * vec4(end, 1.0);
-
     float k0 = 1.0 / H0.w;
     float k1 = 1.0 / H1.w;
-
     vec3 Q0 = start * k0;
     vec3 Q1 = end * k1;
-
+    //NDC space
     vec2 P0 = H0.xy * k0;
-    vec2 p1 = H1.xy * k1;
+    vec2 P1 = H1.xy * k1;
+    //clip into [-1, 1]
+    if (P1.x > 1.0)
+        P1.x = 1.0;
+    if (P1.x < -1.0)
+        P1.x = -1.0;
+    if (P1.y > 1.0)
+        P1.y = 1.0;
+    if (P1.y < -1.0)
+        P1.y = -1.0;
+    //screen space
     P0 = (P0 + 1) / 2 * vec2(width, height);
     P1 = (P1 + 1) / 2 * vec2(width, height);
     P1 += vec2(DistanceSquared(P0, P1) < 0.0001 ? 0.01 : 0.0);
@@ -106,7 +115,6 @@ vec3 RayMarching2D(vec3 origin, vec3 dierction, int maxStep)
     float prevMaxEstimate = start.z;
 
     vec2 uv;
-    bool isHit;
 
     for (vec2 P = P0; step < maxStep; step++, P += dP, Q.z += dQ.z, k += dk)
     {
@@ -123,9 +131,9 @@ vec3 RayMarching2D(vec3 origin, vec3 dierction, int maxStep)
         if (uv.x > width || uv.y > height || uv.x < 0 || uv.y < 0)
             break;
         float bufferDepth = texture(DepthBuffer, uv/vec2(width, height)).r;
-        if (rayZmin > bufferDepth && rayZmax < bufferDepth)
+        if (rayZmin < bufferDepth && rayZmax > bufferDepth)
         {
-            result = texture(ColorBuffer, uv/vec2(width, height));
+            result = texture(ColorBuffer, uv/vec2(width, height)).xyz;
             break;
         }
     }
@@ -178,8 +186,8 @@ void main()
     viewPos /= viewPos.w;
     vec3 reflectDir = normalize(reflect(viewPos.xyz, viewNormal));
     //vec3 rayColor = RayMarching(viewPos.xyz, reflectDir, MAX_STEP);
-
+    vec3 rayColor = RayMarching2D(viewPos.xyz, reflectDir, MAX_STEP);
     //color.xyz = mix(color.xyz, rayColor, roughness);
-    //FragColor = vec4(color.xyz, 1.0);
-    FragColor = vec4(depthColor, 1.0);
+    FragColor = vec4(rayColor.xyz, 1.0);
+    //FragColor = vec4(depthColor, 1.0);
 }
