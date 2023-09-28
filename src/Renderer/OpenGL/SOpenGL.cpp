@@ -159,7 +159,7 @@ namespace SRenderer
         glGenFramebuffers(1, &postFBO);
         glBindFramebuffer(GL_FRAMEBUFFER, postFBO);
 
-        glGenTextures(3, GBuffer);
+        glGenTextures(4, GBuffer);
         //Generate Color and Normal buffer
         for (int i = 0; i < 2; i++)
         {
@@ -180,12 +180,16 @@ namespace SRenderer
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levelsCount - 1);
         glGenerateMipmap(GL_TEXTURE_2D);
-
-        //std::cout << "Generate mip map" << std::endl;
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, GBuffer[2], 0);
+        //View Position Buffer
+        glBindTexture(GL_TEXTURE_2D, GBuffer[3]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, GBuffer[3], 0);
 
-        unsigned int attachments[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
-        glDrawBuffers(3, attachments);
+        unsigned int attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
+        glDrawBuffers(4, attachments);
 
         unsigned int rboDepth;
         glGenRenderbuffers(1, &rboDepth);
@@ -297,12 +301,15 @@ namespace SRenderer
         quad_shader.setInt("ColorBuffer", 0);
         quad_shader.setInt("NormalBuffer", 1);
         quad_shader.setInt("DepthBuffer", 2);
+        quad_shader.setInt("WorldPosBuffer", 3);
         quad_shader.setMat4("inverseProj", mainCamera.get_invProjection(WIDTH, HEIGHT));
         quad_shader.setMat4("inverseView", mainCamera.get_invView());
+        quad_shader.setMat4("view", mainCamera.get_ViewMatrix());
         quad_shader.setMat4("projection", mainCamera.get_Projection(WIDTH, HEIGHT));
         quad_shader.setMat4("view", mainCamera.get_ViewMatrix());
+        quad_shader.setVec3("cameraPos", mainCamera.get_Position());
         quad_shader.setFloat("time", glfwGetTime());
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 4; i++)
         {
             glActiveTexture(GL_TEXTURE0 + i);
             glBindTexture(GL_TEXTURE_2D, GBuffer[i]);

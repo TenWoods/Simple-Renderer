@@ -30,7 +30,7 @@ namespace SRenderer
         unsigned int postFBO;
         unsigned int hizFBO;
         unsigned int quadVAO, quadVBO;
-        unsigned int GBuffer[3];
+        unsigned int GBuffer[4];
         int levelsCount;
     private:
         void initWindow();

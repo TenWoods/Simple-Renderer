@@ -12,7 +12,7 @@ uniform mat4 model;
 out VS_OUT
 {
     vec3 FragPos;
-    vec4 ClipPos;
+    vec4 WorldPos;
     vec3 Normal;
     vec3 Tangent;
     vec2 Texcoord;
@@ -22,8 +22,8 @@ void main()
 {
     vec4 worldPos = model * vec4(aPos, 1.0);
     vs_out.FragPos = worldPos.xyz;
-    vs_out.ClipPos = projection * view * worldPos;
-    gl_Position = vs_out.ClipPos;
+    vs_out.WorldPos = worldPos;
+    gl_Position = projection * view * worldPos;
     mat3 normalMatrix = transpose(inverse(mat3(model)));
     vs_out.Normal = normalMatrix * aNormal;
     vs_out.Tangent = aTangent;

@@ -6,8 +6,11 @@ in vec2 Texcoord;
 uniform sampler2D ColorBuffer;
 uniform sampler2D NormalBuffer;
 uniform sampler2D DepthBuffer;
+uniform sampler2D WorldPosBuffer;
+uniform vec3 cameraPos;
 uniform mat4 inverseProj;
 uniform mat4 inverseView;
+uniform mat4 view;
 uniform mat4 projection;
 uniform float time;
 
@@ -16,7 +19,7 @@ const float minRayStep = 0.1;
 const int  numBinarySearchSteps = 5;
 const float reflectionSpecularFalloffExponent = 3.0;
 const float MAX_THICKNESS = 0.001;
-const int MAX_STEP = 100000;
+const int MAX_STEP = 1000;
 const float STEP_SIZE = 0.4;
 const int MAX_SEARCH = 5;
 const int width = 1920;
@@ -60,15 +63,15 @@ vec3 RayMarching2D(vec3 origin, vec3 dierction, int maxStep)
 {
     vec3 result = vec3(0.0);
     //view space
-    vec3 start = origin;
-    vec3 end = origin + maxStep * dierction;
+    vec3 V0 = (view * vec4(origin, 1.0)).xyz;
+    vec3 V1 = (view * vec4(origin + maxStep * dierction, 1.0)).xyz;
     //clip space
-    vec4 H0 = projection * vec4(start, 1.0);
-    vec4 H1 = projection * vec4(end, 1.0);
+    vec4 H0 = projection * vec4(V0, 1.0);
+    vec4 H1 = projection * vec4(V1, 1.0);
     float k0 = 1.0 / H0.w;
     float k1 = 1.0 / H1.w;
-    vec3 Q0 = start * k0;
-    vec3 Q1 = end * k1;
+    vec3 Q0 = V0 * k0;
+    vec3 Q1 = V1 * k1;
     //NDC space
     vec2 P0 = H0.xy * k0;
     vec2 P1 = H1.xy * k1;
@@ -112,7 +115,7 @@ vec3 RayMarching2D(vec3 origin, vec3 dierction, int maxStep)
     float k = k0;
     float endX = P1.x * stepDir;
     vec3 Q = Q0;
-    float prevMaxEstimate = start.z;
+    float prevMaxEstimate = V0.z;
 
     vec2 uv;
 
@@ -130,10 +133,11 @@ vec3 RayMarching2D(vec3 origin, vec3 dierction, int maxStep)
         }
         if (uv.x > width || uv.y > height || uv.x < 0 || uv.y < 0)
             break;
-        float bufferDepth = texture(DepthBuffer, uv/vec2(width, height)).r;
+        float bufferDepth = texelFetch(DepthBuffer, ivec2(uv), 0).r;
         if (rayZmin < bufferDepth && rayZmax > bufferDepth)
         {
-            result = texture(ColorBuffer, uv/vec2(width, height)).xyz;
+            result = texelFetch(ColorBuffer, ivec2(uv), 0).xyz;
+            //result = vec3(uv / vec2(width, height), 1.0);
             break;
         }
     }
@@ -158,6 +162,7 @@ vec3 RayMarching(vec3 origin, vec3 direction, int maxStep)
         {
             rayPos = BinarySearch(rayPos, direction);
             return texture(ColorBuffer, rayInScreen.xy).rgb;
+            //return vec3(rayInScreen.xy, 1.0);
         }
     }
     vec4 originInScreen = projection * vec4(origin, 1.0);
@@ -182,11 +187,15 @@ void main()
     float depth = textureLod(DepthBuffer, Texcoord, 5.0).x;
     vec3 depthColor = vec3(depth, 0.0, 0.0);
     vec3 ndcPos = vec3(screenPos, depth);
-    vec4 viewPos = inverseProj * vec4(ndcPos, 1.0);
-    viewPos /= viewPos.w;
-    vec3 reflectDir = normalize(reflect(viewPos.xyz, viewNormal));
+//    vec4 viewPos = inverseProj * vec4(ndcPos, 1.0);
+//    viewPos /= viewPos.w;
+    vec4 worldPos = texture(WorldPosBuffer, Texcoord);
+    //vec4 viewPos = view * worldPos;
+    vec3 viewDir = normalize(cameraPos - worldPos.xyz);
+    //viewPos /= viewPos.w;
+    vec3 reflectDir = normalize(reflect(-viewDir, viewNormal));
     //vec3 rayColor = RayMarching(viewPos.xyz, reflectDir, MAX_STEP);
-    vec3 rayColor = RayMarching2D(viewPos.xyz, reflectDir, MAX_STEP);
+    vec3 rayColor = RayMarching2D(worldPos.xyz, reflectDir, MAX_STEP);
     //color.xyz = mix(color.xyz, rayColor, roughness);
     FragColor = vec4(rayColor.xyz, 1.0);
     //FragColor = vec4(depthColor, 1.0);

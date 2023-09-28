@@ -3,11 +3,12 @@
 layout (location = 0) out vec4 ColorBuffer;
 layout (location = 1) out vec4 NormalBuffer;
 layout (location = 2) out float DepthBuffer;
+layout (location = 3) out vec4 WorldPos;
 
 in VS_OUT
 {
     vec3 FragPos;
-    vec4 ClipPos;
+    vec4 WorldPos;
     vec3 Normal;
     vec3 Tangent;
     vec2 Texcoord;
@@ -136,9 +137,10 @@ void main()
 
     vec3 ambient = vec3(0.03) * baseColor;
     vec3 color = ambient + Lo;
-    color = pow(color, vec3(1.0/2.2));
+    //color = pow(color, vec3(1.0/2.2));
 
     ColorBuffer = vec4(color, metallic);
     NormalBuffer = vec4(normal, roughness);
     DepthBuffer = depth;
+    WorldPos = fs_in.WorldPos;
 }
