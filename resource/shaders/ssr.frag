@@ -133,8 +133,8 @@ vec3 RayMarching2D(vec3 origin, vec3 dierction, int maxStep)
         }
         if (uv.x > width || uv.y > height || uv.x < 0 || uv.y < 0)
             break;
-        float bufferDepth = texelFetch(DepthBuffer, ivec2(uv), 0).r;
-        if (rayZmin < bufferDepth && rayZmax > bufferDepth)
+        float bufferDepth = texelFetch(DepthBuffer, ivec2(uv))r;
+        if (rayZmin <= bufferDepth && rayZmax >= bufferDepth)
         {
             result = texelFetch(ColorBuffer, ivec2(uv), 0).xyz;
             //result = vec3(uv / vec2(width, height), 1.0);
@@ -183,20 +183,23 @@ void main()
 //        return;
 //    }
     float roughness = color.a;
-    vec2 screenPos = Texcoord * 2.0 - 1.0;
-    float depth = textureLod(DepthBuffer, Texcoord, 5.0).x;
-    vec3 depthColor = vec3(depth, 0.0, 0.0);
-    vec3 ndcPos = vec3(screenPos, depth);
+//    vec2 screenPos = Texcoord * 2.0 - 1.0;
+//    float depth = textureLod(DepthBuffer, Texcoord, 5.0).x;
+//    vec3 depthColor = vec3(depth, 0.0, 0.0);
+//    vec3 ndcPos = vec3(screenPos, depth);
 //    vec4 viewPos = inverseProj * vec4(ndcPos, 1.0);
 //    viewPos /= viewPos.w;
     vec4 worldPos = texture(WorldPosBuffer, Texcoord);
-    //vec4 viewPos = view * worldPos;
+    vec4 viewPos = view * worldPos;
     vec3 viewDir = normalize(cameraPos - worldPos.xyz);
-    //viewPos /= viewPos.w;
-    vec3 reflectDir = normalize(reflect(-viewDir, viewNormal));
+    //vec3 reflectDir = normalize(reflect(viewPos.xyz, viewNormal));
+    vec3 reflectDir = normalize(reflect(-viewDir.xyz, normal.xyz));
+    //vec3 V1 = (view * vec4(worldPos.xyz + MAX_STEP * reflectDir, 1.0)).xyz;
+    //vec3 V1 = viewPos.xyz + MAX_STEP * reflectDir;
     //vec3 rayColor = RayMarching(viewPos.xyz, reflectDir, MAX_STEP);
     vec3 rayColor = RayMarching2D(worldPos.xyz, reflectDir, MAX_STEP);
-    //color.xyz = mix(color.xyz, rayColor, roughness);
-    FragColor = vec4(rayColor.xyz, 1.0);
+    //color.xyz = mix(color.xyz, rayColor, 1 - roughness);
+    color.xyz += rayColor * 0.5;
+    FragColor = vec4(color.xyz, 1.0);
     //FragColor = vec4(depthColor, 1.0);
 }
