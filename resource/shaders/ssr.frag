@@ -6,13 +6,13 @@ in vec2 Texcoord;
 uniform sampler2D ColorBuffer;
 uniform sampler2D NormalBuffer;
 uniform sampler2D DepthBuffer;
-uniform sampler2D WorldPosBuffer;
+uniform sampler2D ShadowMap;
 uniform vec3 cameraPos;
 uniform mat4 inverseProj;
 uniform mat4 inverseView;
 uniform mat4 view;
 uniform mat4 projection;
-uniform float time;
+uniform mat4 lightSpaceMatrix;
 
 const float step = 0.1;
 const float minRayStep = 0.1;
@@ -59,90 +59,90 @@ float DistanceSquared(vec2 A, vec2 B)
     return dot(A, A);
 }
 
-vec3 RayMarching2D(vec3 origin, vec3 dierction, int maxStep)
-{
-    vec3 result = vec3(0.0);
-    //view space
-    vec3 V0 = (view * vec4(origin, 1.0)).xyz;
-    vec3 V1 = (view * vec4(origin + maxStep * dierction, 1.0)).xyz;
-    //clip space
-    vec4 H0 = projection * vec4(V0, 1.0);
-    vec4 H1 = projection * vec4(V1, 1.0);
-    float k0 = 1.0 / H0.w;
-    float k1 = 1.0 / H1.w;
-    vec3 Q0 = V0 * k0;
-    vec3 Q1 = V1 * k1;
-    //NDC space
-    vec2 P0 = H0.xy * k0;
-    vec2 P1 = H1.xy * k1;
-    //clip into [-1, 1]
-    if (P1.x > 1.0)
-        P1.x = 1.0;
-    if (P1.x < -1.0)
-        P1.x = -1.0;
-    if (P1.y > 1.0)
-        P1.y = 1.0;
-    if (P1.y < -1.0)
-        P1.y = -1.0;
-    //screen space
-    P0 = (P0 + 1) / 2 * vec2(width, height);
-    P1 = (P1 + 1) / 2 * vec2(width, height);
-    P1 += vec2(DistanceSquared(P0, P1) < 0.0001 ? 0.01 : 0.0);
-    vec2 delta = P1 - P0;
-
-    bool permute = false;
-
-    if (abs(delta.x) < abs(delta.y))
-    {
-        permute = true;
-        delta = delta.yx;
-        P0 = P0.yx;
-        P1 = P1.yx;
-    }
-
-    float stepDir = sign(delta.x);
-    float invDx = stepDir / delta.x;
-
-    vec2 dP = vec2(stepDir, delta.y * invDx);
-    vec3 dQ = (Q1 - Q0) * invDx;
-    float dk = (k1 - k0) * invDx;
-
-    P0 += dP;
-    Q0 += dQ;
-    k0 += dk;
-
-    int step = 0;
-    float k = k0;
-    float endX = P1.x * stepDir;
-    vec3 Q = Q0;
-    float prevMaxEstimate = V0.z;
-
-    vec2 uv;
-
-    for (vec2 P = P0; step < maxStep; step++, P += dP, Q.z += dQ.z, k += dk)
-    {
-        uv = permute ? P.yx : P;
-        float rayZmin = prevMaxEstimate;
-        float rayZmax = (dQ.z * 0.5 + Q.z) / (dk * 0.5 + k);
-        prevMaxEstimate = rayZmax;
-        if (rayZmin > rayZmax)
-        {
-            float temp = rayZmin;
-            rayZmin = rayZmax;
-            rayZmax = temp;
-        }
-        if (uv.x > width || uv.y > height || uv.x < 0 || uv.y < 0)
-            break;
-        float bufferDepth = texelFetch(DepthBuffer, ivec2(uv))r;
-        if (rayZmin <= bufferDepth && rayZmax >= bufferDepth)
-        {
-            result = texelFetch(ColorBuffer, ivec2(uv), 0).xyz;
-            //result = vec3(uv / vec2(width, height), 1.0);
-            break;
-        }
-    }
-    return result;
-}
+//vec3 RayMarching2D(vec3 origin, vec3 dierction, int maxStep)
+//{
+//    vec3 result = vec3(0.0);
+//    //view space
+//    vec3 V0 = (view * vec4(origin, 1.0)).xyz;
+//    vec3 V1 = (view * vec4(origin + maxStep * dierction, 1.0)).xyz;
+//    //clip space
+//    vec4 H0 = projection * vec4(V0, 1.0);
+//    vec4 H1 = projection * vec4(V1, 1.0);
+//    float k0 = 1.0 / H0.w;
+//    float k1 = 1.0 / H1.w;
+//    vec3 Q0 = V0 * k0;
+//    vec3 Q1 = V1 * k1;
+//    //NDC space
+//    vec2 P0 = H0.xy * k0;
+//    vec2 P1 = H1.xy * k1;
+//    //clip into [-1, 1]
+//    if (P1.x > 1.0)
+//        P1.x = 1.0;
+//    if (P1.x < -1.0)
+//        P1.x = -1.0;
+//    if (P1.y > 1.0)
+//        P1.y = 1.0;
+//    if (P1.y < -1.0)
+//        P1.y = -1.0;
+//    //screen space
+//    P0 = (P0 + 1) / 2 * vec2(width, height);
+//    P1 = (P1 + 1) / 2 * vec2(width, height);
+//    P1 += vec2(DistanceSquared(P0, P1) < 0.0001 ? 0.01 : 0.0);
+//    vec2 delta = P1 - P0;
+//
+//    bool permute = false;
+//
+//    if (abs(delta.x) < abs(delta.y))
+//    {
+//        permute = true;
+//        delta = delta.yx;
+//        P0 = P0.yx;
+//        P1 = P1.yx;
+//    }
+//
+//    float stepDir = sign(delta.x);
+//    float invDx = stepDir / delta.x;
+//
+//    vec2 dP = vec2(stepDir, delta.y * invDx);
+//    vec3 dQ = (Q1 - Q0) * invDx;
+//    float dk = (k1 - k0) * invDx;
+//
+//    P0 += dP;
+//    Q0 += dQ;
+//    k0 += dk;
+//
+//    int step = 0;
+//    float k = k0;
+//    float endX = P1.x * stepDir;
+//    vec3 Q = Q0;
+//    float prevMaxEstimate = V0.z;
+//
+//    vec2 uv;
+//
+//    for (vec2 P = P0; step < maxStep; step++, P += dP, Q.z += dQ.z, k += dk)
+//    {
+//        uv = permute ? P.yx : P;
+//        float rayZmin = prevMaxEstimate;
+//        float rayZmax = (dQ.z * 0.5 + Q.z) / (dk * 0.5 + k);
+//        prevMaxEstimate = rayZmax;
+//        if (rayZmin > rayZmax)
+//        {
+//            float temp = rayZmin;
+//            rayZmin = rayZmax;
+//            rayZmax = temp;
+//        }
+//        if (uv.x > width || uv.y > height || uv.x < 0 || uv.y < 0)
+//            break;
+//        float bufferDepth = texelFetch(DepthBuffer, ivec2(uv)).r;
+//        if (rayZmin <= bufferDepth && rayZmax >= bufferDepth)
+//        {
+//            result = texelFetch(ColorBuffer, ivec2(uv), 0).xyz;
+//            //result = vec3(uv / vec2(width, height), 1.0);
+//            break;
+//        }
+//    }
+//    return result;
+//}
 
 vec3 RayMarching(vec3 origin, vec3 direction, int maxStep)
 {
@@ -189,17 +189,19 @@ void main()
 //    vec3 ndcPos = vec3(screenPos, depth);
 //    vec4 viewPos = inverseProj * vec4(ndcPos, 1.0);
 //    viewPos /= viewPos.w;
-    vec4 worldPos = texture(WorldPosBuffer, Texcoord);
-    vec4 viewPos = view * worldPos;
-    vec3 viewDir = normalize(cameraPos - worldPos.xyz);
+    //vec4 worldPos = texture(WorldPosBuffer, Texcoord);
+    //vec4 viewPos = view * worldPos;
+    //vec3 viewDir = normalize(cameraPos - worldPos.xyz);
     //vec3 reflectDir = normalize(reflect(viewPos.xyz, viewNormal));
-    vec3 reflectDir = normalize(reflect(-viewDir.xyz, normal.xyz));
+    //vec3 reflectDir = normalize(reflect(-viewDir.xyz, normal.xyz));
     //vec3 V1 = (view * vec4(worldPos.xyz + MAX_STEP * reflectDir, 1.0)).xyz;
     //vec3 V1 = viewPos.xyz + MAX_STEP * reflectDir;
     //vec3 rayColor = RayMarching(viewPos.xyz, reflectDir, MAX_STEP);
-    vec3 rayColor = RayMarching2D(worldPos.xyz, reflectDir, MAX_STEP);
+    //vec3 rayColor = RayMarching2D(worldPos.xyz, reflectDir, MAX_STEP);
     //color.xyz = mix(color.xyz, rayColor, 1 - roughness);
-    color.xyz += rayColor * 0.5;
-    FragColor = vec4(color.xyz, 1.0);
-    //FragColor = vec4(depthColor, 1.0);
+    //color.xyz += rayColor * 0.5;
+    float lightDepth = texture(ShadowMap, Texcoord).r;
+    //FragColor = vec4(color.xyz, 1.0);
+    FragColor = vec4(normal.xyz, 1.0);
+    //FragColor = vec4(lightDepth, lightDepth, lightDepth, 1.0);
 }

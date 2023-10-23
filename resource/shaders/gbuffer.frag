@@ -3,7 +3,6 @@
 layout (location = 0) out vec4 ColorBuffer;
 layout (location = 1) out vec4 NormalBuffer;
 layout (location = 2) out float DepthBuffer;
-layout (location = 3) out vec4 WorldPos;
 
 in VS_OUT
 {
@@ -142,5 +141,4 @@ void main()
     ColorBuffer = vec4(color, metallic);
     NormalBuffer = vec4(normal, roughness);
     DepthBuffer = depth;
-    WorldPos = fs_in.WorldPos;
 }

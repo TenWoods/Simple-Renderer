@@ -19,7 +19,10 @@ namespace SRenderer
         Shader m_shader;
         Shader quad_shader;
         Shader preCompute_shader;
+        Shader shadow_shader;
         Camera mainCamera;
+        Camera lightCamera;
+        glm::mat4 lightSpaceMatrix;
         std::vector<SLight> lights;
         float lastFrame;
         float deltaTime;
@@ -29,8 +32,10 @@ namespace SRenderer
 
         unsigned int postFBO;
         unsigned int hizFBO;
+        unsigned int shadowFBO;
+        unsigned int shadowMap;
         unsigned int quadVAO, quadVBO;
-        unsigned int GBuffer[4];
+        unsigned int GBuffer[3];
         int levelsCount;
     private:
         void initWindow();
