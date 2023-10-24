@@ -171,24 +171,41 @@ vec3 RayMarching(vec3 origin, vec3 direction, int maxStep)
     return texture(ColorBuffer, originInScreen.xy).rgb;;
 }
 
+float LinearizeDepth(float depth)
+{
+    float z = depth * 2.0 - 1.0; // back to NDC
+    return (2.0 * 0.1 * 100) / (100.1 - z * 99.9);
+}
+
 void main()
 {
     vec4 normal = texture(NormalBuffer, Texcoord);
     float metallic = normal.w;
     vec3 viewNormal = vec3(vec4(normal.xyz, 0.0) * inverseView);
     vec4 color = texture(ColorBuffer, Texcoord);
-//    if (metallic < 0.5)
-//    {
-//        FragColor = vec4(color.xyz, 1.0);
-//        return;
-//    }
+    if (metallic < 0.5)
+    {
+        FragColor = vec4(color.xyz, 1.0);
+        return;
+    }
     float roughness = color.a;
-//    vec2 screenPos = Texcoord * 2.0 - 1.0;
-//    float depth = textureLod(DepthBuffer, Texcoord, 5.0).x;
-//    vec3 depthColor = vec3(depth, 0.0, 0.0);
-//    vec3 ndcPos = vec3(screenPos, depth);
-//    vec4 viewPos = inverseProj * vec4(ndcPos, 1.0);
-//    viewPos /= viewPos.w;
+    vec2 screenPos = Texcoord * 2.0 - 1.0;
+    float depth = textureLod(DepthBuffer, Texcoord, 0.0).x;
+    depth = depth * 2.0 - 1.0;
+    vec3 ndcPos = vec3(screenPos, depth);
+    vec4 viewPos = inverseProj * vec4(ndcPos, 1.0);
+    //viewPos /= viewPos.w;
+
+    //shadow mapping
+    vec4 worldPos = inverseView * viewPos;
+    worldPos /= worldPos.w;
+    worldPos.w = 1.0;
+    vec4 lightSpacePos = lightSpaceMatrix * worldPos;
+    lightSpacePos /= lightSpacePos.w;
+    vec3 projectCoords = lightSpacePos.xyz * 0.5 + 0.5;
+    float closeDepth = texture(ShadowMap, projectCoords.xy).r;
+    float currentDepth = projectCoords.z;
+    float shadow = currentDepth - 0.00005 > closeDepth ? 1.0 : 0.0;
     //vec4 worldPos = texture(WorldPosBuffer, Texcoord);
     //vec4 viewPos = view * worldPos;
     //vec3 viewDir = normalize(cameraPos - worldPos.xyz);
@@ -200,8 +217,8 @@ void main()
     //vec3 rayColor = RayMarching2D(worldPos.xyz, reflectDir, MAX_STEP);
     //color.xyz = mix(color.xyz, rayColor, 1 - roughness);
     //color.xyz += rayColor * 0.5;
-    float lightDepth = texture(ShadowMap, Texcoord).r;
-    //FragColor = vec4(color.xyz, 1.0);
-    FragColor = vec4(normal.xyz, 1.0);
+    //float lightDepth = texture(DepthBuffer, Texcoord).r;
+    FragColor = vec4(color.xyz, 1.0) * (1.0 - shadow);
+    //FragColor = vec4(normal.xyz, 1.0);
     //FragColor = vec4(lightDepth, lightDepth, lightDepth, 1.0);
 }

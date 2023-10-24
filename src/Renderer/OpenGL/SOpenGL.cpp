@@ -46,14 +46,16 @@ namespace SRenderer
         m_shader = Shader("../../resource/shaders/svertex.vert", "../../resource/shaders/gbuffer.frag");
         preCompute_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hizbuffer.frag");
         quad_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/ssr.frag");
+        shadow_shader = Shader("../../resource/shaders/lightDepth.vert", "../../resource/shaders/lightDepth.frag");
         addModel("../../resource/model/sponza/Sponza.gltf");
-//        addModel("../../resource/model/bottle/WaterBottle.gltf");
+        addModel("../../resource/model/bottle/WaterBottle.gltf");
 //        addModel("../../resource/model/bottle/WaterBottle.gltf");
 //        addModel("../../resource/model/bottle/WaterBottle.gltf");
 //        addModel("../../resource/model/bottle/WaterBottle.gltf");
 //        addModel("../../resource/model/bottle/WaterBottle.gltf");
 
 #endif
+        lightCamera.set_Zoom(90.0f);
         quad_shader.use();
         quad_shader.setInt("ColorBuffer", 0);
         quad_shader.setInt("NormalBuffer", 1);
@@ -73,7 +75,7 @@ namespace SRenderer
 //        scene_root[4]->set_position(glm::vec3(0.0f, 6.0f, 10.0f));
 //        scene_root[5]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
 //        scene_root[5]->set_position(glm::vec3(15.0f, 6.0f, -10.0f));
-        addLight(SLight(glm::vec3(1.0, 20.0, 0.0), glm::vec3(255.0, 255.0, 255.0)));
+        addLight(SLight(glm::vec3(1.0, 20.0, 0.0), glm::vec3(100.0, 100.0, 100.0)));
 
         deferredRendering();
     }
@@ -122,7 +124,7 @@ namespace SRenderer
     }
 
     SOpenGL::SOpenGL() : mainCamera(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0), 0.0f, 0.0f),
-                         lightCamera(glm::vec3(-2, 10, 0), glm::vec3(0.0, 1.0, 0.0), 0.0, -90.0f),
+                         lightCamera(glm::vec3(1.0, 50.0, 0.0), glm::vec3(0.0, 1.0, 0.0), 0.0, -90.0f),
                          lastFrame(0.0), deltaTime(0.0)
     {
 
