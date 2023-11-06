@@ -251,7 +251,7 @@ namespace SRenderer
 
             glfwSwapBuffers(window);
             glfwPollEvents();
-            std::cout << deltaTime << std::endl;
+//            std::cout << deltaTime << std::endl;
         }
     }
 
@@ -261,7 +261,7 @@ namespace SRenderer
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         m_shader.use();
-        glm::mat4 projection = mainCamera.get_Projection(WIDTH, HEIGHT);
+        glm::mat4 projection = mainCamera.get_Projection(WIDTH, HEIGHT, false);
         glm::mat4 view = mainCamera.get_ViewMatrix();
         m_shader.setMat4("projection", projection);
         m_shader.setMat4("view", view);
@@ -279,7 +279,7 @@ namespace SRenderer
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shadow_shader.use();
-        projection = lightCamera.get_Projection(WIDTH, HEIGHT);
+        projection = lightCamera.get_Projection(WIDTH, HEIGHT, false);
         view = lightCamera.get_ViewMatrix();
         lightSpaceMatrix = projection * view;
         shadow_shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
@@ -332,7 +332,7 @@ namespace SRenderer
         quad_shader.setMat4("inverseProj", mainCamera.get_invProjection(WIDTH, HEIGHT));
         quad_shader.setMat4("inverseView", mainCamera.get_invView());
         quad_shader.setMat4("view", mainCamera.get_ViewMatrix());
-        quad_shader.setMat4("projection", mainCamera.get_Projection(WIDTH, HEIGHT));
+        quad_shader.setMat4("projection", mainCamera.get_Projection(WIDTH, HEIGHT, false));
         quad_shader.setMat4("view", mainCamera.get_ViewMatrix());
         quad_shader.setVec3("cameraPos", mainCamera.get_Position());
         quad_shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
@@ -362,7 +362,7 @@ namespace SRenderer
             //glClearColor(1.0, 1.0, 1.0, 1.0);
             //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             m_shader.use();
-            glm::mat4 projection = mainCamera.get_Projection(WIDTH, HEIGHT);
+            glm::mat4 projection = mainCamera.get_Projection(WIDTH, HEIGHT, false);
             m_shader.setMat4("projection", projection);
             m_shader.setMat4("view", mainCamera.get_ViewMatrix());
             m_shader.setVec3("cameraPos", mainCamera.get_Position());

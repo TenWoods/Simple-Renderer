@@ -35,7 +35,7 @@ namespace SRenderer
         Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch);
         Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
         glm::mat4 get_ViewMatrix();
-        glm::mat4 get_Projection(int width, int height);
+        glm::mat4 get_Projection(int width, int height, bool isOrtho);
 
         glm::mat4 get_invProjection(int width, int height);
         glm::mat4 get_invView();

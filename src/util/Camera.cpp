@@ -56,9 +56,16 @@ namespace SRenderer
         return glm::lookAt(position, position + front, up);
     }
 
-    glm::mat4 Camera::get_Projection(int width, int height)
+    glm::mat4 Camera::get_Projection(int width, int height, bool isOrtho)
     {
-        return glm::perspective(glm::radians(zoom), (float)width / (float)height, near, far);
+        if (isOrtho)
+        {
+            return glm::ortho(-25.0f, 25.0f, -10.0f, 10.0f, 1.0f, 100.0f);
+        }
+        else
+        {
+            return glm::perspective(glm::radians(zoom), (float)width / (float)height, near, far);
+        }
     }
 
     glm::mat4 Camera::get_invView()
@@ -69,7 +76,7 @@ namespace SRenderer
 
     glm::mat4 Camera::get_invProjection(int width, int height)
     {
-        glm::mat4 projection = get_Projection(width, height);
+        glm::mat4 projection = get_Projection(width, height, false);
         return glm::inverse(projection);
     }
 
