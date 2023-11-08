@@ -45,7 +45,7 @@ namespace SRenderer
 #elif _WIN64
         m_shader = Shader("../../resource/shaders/svertex.vert", "../../resource/shaders/gbuffer.frag");
         preCompute_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hizbuffer.frag");
-        quad_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/ssr.frag");
+        quad_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hiztrace.frag");
         shadow_shader = Shader("../../resource/shaders/lightDepth.vert", "../../resource/shaders/lightDepth.frag");
         addModel("../../resource/model/sponza/Sponza.gltf");
         addModel("../../resource/model/bottle/WaterBottle.gltf");
@@ -245,7 +245,7 @@ namespace SRenderer
 
             genGbuffer();
 
-            //genHizbuffer();
+            genHizbuffer();
 
             postRendering();
 

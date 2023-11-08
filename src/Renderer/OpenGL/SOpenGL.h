@@ -13,8 +13,8 @@ namespace SRenderer
     {
     private:
         GLFWwindow* window;
-        const int WIDTH = 512;
-        const int HEIGHT = 512;
+        const int WIDTH = 1024;
+        const int HEIGHT = 1024;
         std::vector<std::shared_ptr<SObject>> scene_root;
         Shader m_shader;
         Shader quad_shader;

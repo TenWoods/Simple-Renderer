@@ -8,7 +8,7 @@ uniform sampler2D Depthmap;
 uniform ivec2 previousDim;
 uniform int previousLevel;
 
-void main()
+float HizDepth()
 {
     ivec2 thisLevelTexelCoord = ivec2(gl_FragCoord);
     ivec2 previousTexcoord = 2 * thisLevelTexelCoord;
@@ -39,5 +39,10 @@ void main()
         rowDepth.y = texelFetch(Depthmap, previousTexcoord + ivec2(1, 2), previousLevel).r;
         minDepth = min(min(rowDepth.x, minDepth), rowDepth.y);
     }
-    DepthMipmap = minDepth;
+    return minDepth;
+}
+
+void main()
+{
+    DepthMipmap = HizDepth();
 }

@@ -121,8 +121,8 @@ void main()
     vec3 mrTex = texture(MetallicRoughnessMap, fs_in.Texcoord).xyz;
     float metallic = mrTex.x;
     float roughness = mrTex.y;
-    //vec3 normal = getNormalFromMap();
-    vec3 normal = fs_in.Normal;
+    vec3 normal = getNormalFromMap();
+    //vec3 normal = fs_in.Normal;
     vec3 viewDir = normalize(cameraPos - fs_in.FragPos);
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, baseColor, metallic);
@@ -134,7 +134,7 @@ void main()
 
     Lo += calculate_point(baseColor, F0, viewDir, normal, metallic, roughness);
 
-    vec3 ambient = vec3(0.03) * baseColor;
+    vec3 ambient = vec3(0.1) * baseColor;
     vec3 color = ambient + Lo;
     //color = pow(color, vec3(1.0/2.2));
 

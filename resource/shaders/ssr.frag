@@ -166,7 +166,8 @@ vec3 RayMarching(vec3 origin, vec3 direction, int maxStep)
         float rayDepth = texture(DepthBuffer, rayInScreen.xy).x * 2.0 - 1.0;
         if (rayDepth < rayInScreen.z && rayInScreen.z - rayDepth <= MAX_THICKNESS)
         {
-            rayPos = BinarySearch(rayPos, direction);
+            //rayPos = BinarySearch(rayPos, direction);
+            //rayInScreen = projection * vec4(rayPos, 1.0);
             return texture(ColorBuffer, rayInScreen.xy).rgb;
             //return vec3(rayInScreen.xy, 1.0);
         }
@@ -211,8 +212,8 @@ void main()
     //vec3 reflectDir = normalize(reflect(-viewDir.xyz, normal.xyz));
     //vec3 V1 = (view * vec4(worldPos.xyz + MAX_STEP * reflectDir, 1.0)).xyz;
     //vec3 V1 = viewPos.xyz + MAX_STEP * reflectDir;
-    //vec3 rayColor = RayMarching(viewPos.xyz, reflectDir, MAX_STEP);
-    vec3 rayColor = RayMarching2D(viewPos, reflectDir, MAX_STEP);
+    vec3 rayColor = RayMarching(viewPos.xyz, reflectDir, MAX_STEP);
+    //vec3 rayColor = RayMarching2D(viewPos, reflectDir, MAX_STEP);
     //color.xyz = mix(color.xyz, rayColor, 1 - roughness);
     color.xyz += rayColor * 0.5;
     //float lightDepth = texture(DepthBuffer, Texcoord).r;
