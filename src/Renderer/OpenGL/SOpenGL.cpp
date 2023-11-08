@@ -75,7 +75,7 @@ namespace SRenderer
 //        scene_root[4]->set_position(glm::vec3(0.0f, 6.0f, 10.0f));
 //        scene_root[5]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
 //        scene_root[5]->set_position(glm::vec3(15.0f, 6.0f, -10.0f));
-        addLight(SLight(glm::vec3(1.0, 20.0, 0.0), glm::vec3(100.0, 100.0, 100.0)));
+        addLight(SLight(glm::vec3(0.0, 20.0, 0.0), glm::vec3(100.0, 100.0, 100.0)));
 
         deferredRendering();
     }
@@ -335,7 +335,7 @@ namespace SRenderer
         quad_shader.setMat4("projection", mainCamera.get_Projection(WIDTH, HEIGHT, false));
         quad_shader.setMat4("view", mainCamera.get_ViewMatrix());
         quad_shader.setVec3("cameraPos", mainCamera.get_Position());
-        quad_shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        quad_shader.setVec3("lightPos", lights[0].get_position());
         for (int i = 0; i < 3; i++)
         {
             glActiveTexture(GL_TEXTURE0 + i);
