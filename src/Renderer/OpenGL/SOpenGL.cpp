@@ -34,7 +34,7 @@ namespace SRenderer
 #ifdef __linux__
         m_shader = Shader("../resource/shaders/svertex.vert", "../resource/shaders/gbuffer.frag");
         preCompute_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/hizbuffer.frag");
-        quad_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/ssr.frag");
+        quad_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/hiztrace.frag");
         shadow_shader = Shader("../resource/shaders/lightDepth.vert", "../resource/shaders/lightDepth.frag");
         addModel("../resource/model/Sponza/glTF/Sponza.gltf");
         addModel("../resource/model/FlightHelmet/glTF/FlightHelmet.gltf");
@@ -75,7 +75,7 @@ namespace SRenderer
 //        scene_root[4]->set_position(glm::vec3(0.0f, 6.0f, 10.0f));
 //        scene_root[5]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
 //        scene_root[5]->set_position(glm::vec3(15.0f, 6.0f, -10.0f));
-        addLight(SLight(glm::vec3(0.0, 20.0, 0.0), glm::vec3(100.0, 100.0, 100.0)));
+        addLight(SLight(glm::vec3(0.0, 20.0, 0.0), glm::vec3(200.0, 200.0, 200.0)));
 
         deferredRendering();
     }

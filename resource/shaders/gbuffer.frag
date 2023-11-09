@@ -40,7 +40,8 @@ vec3 getNormalFromMap()
     vec3 B = -normalize(cross(N, T));
     mat3 TBN = mat3(T, B, N);
 
-    return normalize(TBN * tangentNormal);
+    vec3 normal = normalize(TBN * tangentNormal) / 2.0 + vec3(0.5, 0.5, 0.5);
+    return normal;
 }
 
 float LinearizeDepth(float depth)
@@ -121,8 +122,8 @@ void main()
     vec3 mrTex = texture(MetallicRoughnessMap, fs_in.Texcoord).xyz;
     float metallic = mrTex.x;
     float roughness = mrTex.y;
-    vec3 normal = getNormalFromMap();
-    //vec3 normal = fs_in.Normal;
+    //vec3 normal = getNormalFromMap();
+    vec3 normal = fs_in.Normal /2.0 + vec3(0.5, 0.5, 0.5);
     vec3 viewDir = normalize(cameraPos - fs_in.FragPos);
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, baseColor, metallic);

@@ -181,6 +181,8 @@ vec3 RayMarching(vec3 origin, vec3 direction, int maxStep)
 void main()
 {
     vec4 normal = texture(NormalBuffer, Texcoord);
+    normal.xyz *= 2.0;
+    normal.xyz -= 1.0;
     float metallic = normal.w;
     vec3 viewNormal = vec3(vec4(normal.xyz, 0.0) * inverseView);
     vec4 color = texture(ColorBuffer, Texcoord);

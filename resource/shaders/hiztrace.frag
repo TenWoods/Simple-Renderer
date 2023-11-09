@@ -35,29 +35,29 @@ bool CrossedCellBoundary(vec2 cellIdxA, vec2 cellIdxB)
     return cellIdxA.x != cellIdxB.x || cellIdxA.y != cellIdxB.y;
 }
 
-//vec2 GetMinMaxDepthPlanes(vec2 ray, float level)
-//{
-//    return
-//}
-//
-//vec3 Hiztrace(vec3 origin, vec3 direction, float maxDistance)
-//{
-//    vec2 crossStep = vec2(direction.x >= 0 ? 1 : -1, direction.y >=0 ? 1 : -1);
-//    vec2 crossOffset = crossStep / vec2(width, height) / 128;
-//    crossStep = clamp(crossStep, 0.0, 1.0);
-//
-//    vec3 rayPos = origin;
-//    float minZ = rayPos.z;
-//    float maxZ = rayPos.z + direction.z * maxDistance;
-//    float deltaZ = maxZ - minZ;
-//
-//}
+float GetMinDepthPlane(vec2 ray, float level)
+{
+
+}
+
+vec3 Hiztrace(vec3 origin, vec3 direction, float maxDistance)
+{
+    vec2 crossStep = vec2(direction.x >= 0 ? 1 : -1, direction.y >=0 ? 1 : -1);
+    vec2 crossOffset = crossStep / vec2(width, height) / 128;
+    crossStep = clamp(crossStep, 0.0, 1.0);
+
+    vec3 rayPos = origin;
+    float minZ = rayPos.z;
+    float maxZ = rayPos.z + direction.z * maxDistance;
+    float deltaZ = maxZ - minZ;
+
+}
 
 vec3 BinarySearch(vec3 origin, vec3 direction)
 {
     float sign = -1.0;
     vec3 rayPos = origin;
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 8; i++)
     {
         direction *= 0.5;
         rayPos += sign * direction;
@@ -123,9 +123,11 @@ float ShadowTrace(vec3 origin, vec3 direction, float maxDistance)
 void main()
 {
     vec4 normal = texture(NormalBuffer, Texcoord);
+    normal.xyz *= 2.0;
+    normal.xyz -= 1.0;
     //vec3 viewNormal = vec3(vec4(normal.xyz, 0.0) * inverseView);
     vec3 viewNormal = normal.xyz;
-    vec4 color = texture(ColorBuffer, Texcoord);
+    vec4 color = vec4(texture(ColorBuffer, Texcoord).xyz, 1.0);
 
     //calculate position
     vec2 screenPos = Texcoord * 2.0 - 1.0;
@@ -140,31 +142,31 @@ void main()
     endClipPos /= endClipPos.w;
     vec3 reflectDirClip = normalize(endClipPos.xyz - beginClipPos.xyz);
     //calculate shadow ray
-    vec4 lightViewPos = view * vec4(lightPos, 1.0);
-    vec4 shaodowDir = vec4(normalize(lightViewPos.xyz - beginViewPos.xyz), 0.0);
-    float shaodwIntensity = dot(shaodowDir.xyz ,vec3(0.0, 1.0, 0.0));
-    vec4 endShaodowViewPos = beginViewPos + shaodowDir * MAXLENGTH;
-    //endShaodowViewPos /= (endShaodowViewPos.z < 0 ? endShaodowViewPos.z : 1.0);
-    vec4 endShaodowClipPos = projection * endShaodowViewPos;
-    endShaodowClipPos /= endShaodowClipPos.w;
-    vec3 shaodwDirClip = normalize(endShaodowClipPos.xyz - beginClipPos.xyz);
+//    vec4 lightViewPos = view * vec4(lightPos, 1.0);
+//    vec4 shaodowDir = vec4(normalize(lightViewPos.xyz - beginViewPos.xyz), 0.0);
+//    float shaodwIntensity = dot(shaodowDir.xyz ,vec3(0.0, 1.0, 0.0));
+//    vec4 endShaodowViewPos = beginViewPos + shaodowDir * MAXLENGTH;
+//    //endShaodowViewPos /= (endShaodowViewPos.z < 0 ? endShaodowViewPos.z : 1.0);
+//    vec4 endShaodowClipPos = projection * endShaodowViewPos;
+//    endShaodowClipPos /= endShaodowClipPos.w;
+//    vec3 shaodwDirClip = normalize(endShaodowClipPos.xyz - beginClipPos.xyz);
 
     //transform to texture space
     beginClipPos.xy *= vec2(0.5, 0.5);
     beginClipPos.xy += vec2(0.5, 0.5);
     reflectDirClip.xy *= vec2(0.5, 0.5);
-    shaodwDirClip.xy *= vec2(0.5, 0.5);
+    //shaodwDirClip.xy *= vec2(0.5, 0.5);
 
     //max iteratuib distance
     float maxDistance = reflectDirClip.x >= 0 ? (1 - beginClipPos.x)/reflectDirClip.x : -beginClipPos.x/reflectDirClip.x;
     maxDistance = min(maxDistance, reflectDirClip.y >= 0 ? (1 - beginClipPos.y)/reflectDirClip.y : -beginClipPos.y/reflectDirClip.y);
     maxDistance = min(maxDistance, reflectDirClip.z >= 0 ? (1 - beginClipPos.z)/reflectDirClip.z : -beginClipPos.z/reflectDirClip.z);
-    float maxDistanceShdow = shaodwDirClip.x >= 0 ? (1 - beginClipPos.x)/shaodwDirClip.x : -beginClipPos.x/shaodwDirClip.x;
-    maxDistanceShdow = min(maxDistanceShdow, shaodwDirClip.y >= 0 ? (1 - beginClipPos.y)/shaodwDirClip.y : -beginClipPos.y/shaodwDirClip.y);
-    maxDistanceShdow = min(maxDistanceShdow, shaodwDirClip.z >= 0 ? (1 - beginClipPos.z)/shaodwDirClip.z : -beginClipPos.z/shaodwDirClip.z);
+//    float maxDistanceShdow = shaodwDirClip.x >= 0 ? (1 - beginClipPos.x)/shaodwDirClip.x : -beginClipPos.x/shaodwDirClip.x;
+//    maxDistanceShdow = min(maxDistanceShdow, shaodwDirClip.y >= 0 ? (1 - beginClipPos.y)/shaodwDirClip.y : -beginClipPos.y/shaodwDirClip.y);
+//    maxDistanceShdow = min(maxDistanceShdow, shaodwDirClip.z >= 0 ? (1 - beginClipPos.z)/shaodwDirClip.z : -beginClipPos.z/shaodwDirClip.z);
 
     vec3 rayColor = LinearTrace(beginClipPos.xyz, reflectDirClip, maxDistance);
-    float shadow = ShadowTrace(beginClipPos.xyz, shaodwDirClip, maxDistanceShdow) * shaodwIntensity;
+    //float shadow = ShadowTrace(beginClipPos.xyz, shaodwDirClip, maxDistanceShdow) * shaodwIntensity;
     color.xyz += rayColor.xyz;
     //color.xyz *= (1.0 - shadow);
     FragColor = color;
