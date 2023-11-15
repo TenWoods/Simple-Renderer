@@ -34,11 +34,11 @@ namespace SRenderer
 #ifdef __linux__
         m_shader = Shader("../resource/shaders/svertex.vert", "../resource/shaders/gbuffer.frag");
         preCompute_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/hizbuffer.frag");
-        quad_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/hiztrace.frag");
+        quad_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/ssr.frag");
         shadow_shader = Shader("../resource/shaders/lightDepth.vert", "../resource/shaders/lightDepth.frag");
         addModel("../resource/model/Sponza/glTF/Sponza.gltf");
         addModel("../resource/model/FlightHelmet/glTF/FlightHelmet.gltf");
-//        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
+        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
@@ -65,8 +65,8 @@ namespace SRenderer
         preCompute_shader.setInt("Depthmap", 0);
         scene_root[0]->set_scale(glm::vec3(0.1f, 0.1f, 0.1f));
         scene_root[0]->set_position(glm::vec3(0.0f, 0.0f, 0.0f));
-        scene_root[1]->set_scale(glm::vec3(10.0f, 10.0f, 10.0f));
-        scene_root[1]->set_position(glm::vec3(0.0f, 6.0f, 0.0f));
+        scene_root[1]->set_scale(glm::vec3(20.0f, 20.0f, 20.0f));
+        scene_root[1]->set_position(glm::vec3(0.0f, 0.0f, 0.0f));
 //        scene_root[2]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
 //        scene_root[2]->set_position(glm::vec3(15.0f, 6.0f, 0.0f));
 //        scene_root[3]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
@@ -75,7 +75,7 @@ namespace SRenderer
 //        scene_root[4]->set_position(glm::vec3(0.0f, 6.0f, 10.0f));
 //        scene_root[5]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
 //        scene_root[5]->set_position(glm::vec3(15.0f, 6.0f, -10.0f));
-        addLight(SLight(glm::vec3(0.0, 20.0, 0.0), glm::vec3(200.0, 200.0, 200.0)));
+        addLight(SLight(glm::vec3(0.0, 20.0, 0.0), glm::vec3(2000.0, 2000.0, 2000.0)));
 
         deferredRendering();
     }
@@ -123,8 +123,8 @@ namespace SRenderer
         glViewport(0, 0, width, height);
     }
 
-    SOpenGL::SOpenGL() : mainCamera(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0), 0.0f, 0.0f),
-                         lightCamera(glm::vec3(1.0, 50.0, 0.0), glm::vec3(0.0, 1.0, 0.0), 0.0, -90.0f),
+    SOpenGL::SOpenGL() : mainCamera(glm::vec3(-70.0, 20.0, 0.0), glm::vec3(0.0, 1.0, 0.0), 0.0f, 0.0f),
+                         lightCamera(glm::vec3(0.0, 20.0, 0.0), glm::vec3(0.0, 1.0, 0.0), 0.0, -90.0f),
                          lastFrame(0.0), deltaTime(0.0)
     {
 
@@ -165,14 +165,26 @@ namespace SRenderer
 
         glGenTextures(3, GBuffer);
         //Generate Color and Normal buffer
-        for (int i = 0; i < 2; i++)
-        {
-            glBindTexture(GL_TEXTURE_2D, GBuffer[i]);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, GBuffer[i], 0);
-        }
+//        for (int i = 0; i < 2; i++)
+//        {
+//            glBindTexture(GL_TEXTURE_2D, GBuffer[i]);
+//            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
+//            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, GBuffer[i], 0);
+//        }
+        //Color buffer
+        glBindTexture(GL_TEXTURE_2D, GBuffer[0]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, GBuffer[0], 0);
+        //Normal buffer
+        glBindTexture(GL_TEXTURE_2D, GBuffer[1]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0, GL_RGBA, GL_INT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+1, GL_TEXTURE_2D, GBuffer[1], 0);
         //Generate Depth buffer
         levelsCount = 1 + (int)floorf(log2f(fmaxf(WIDTH, HEIGHT)));
         glBindTexture(GL_TEXTURE_2D, GBuffer[2]);
@@ -279,7 +291,7 @@ namespace SRenderer
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shadow_shader.use();
-        projection = lightCamera.get_Projection(WIDTH, HEIGHT, false);
+        projection = lightCamera.get_Projection(WIDTH, HEIGHT, true);
         view = lightCamera.get_ViewMatrix();
         lightSpaceMatrix = projection * view;
         shadow_shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
@@ -336,6 +348,7 @@ namespace SRenderer
         quad_shader.setMat4("view", mainCamera.get_ViewMatrix());
         quad_shader.setVec3("cameraPos", mainCamera.get_Position());
         quad_shader.setVec3("lightPos", lights[0].get_position());
+        quad_shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
         for (int i = 0; i < 3; i++)
         {
             glActiveTexture(GL_TEXTURE0 + i);

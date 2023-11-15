@@ -12,6 +12,7 @@ uniform mat4 inverseView;
 uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 lightSpaceMatrix;
+uniform vec3 lightPos;
 
 const float step = 0.1;
 const float minRayStep = 0.1;
@@ -166,8 +167,8 @@ vec3 RayMarching(vec3 origin, vec3 direction, int maxStep)
         float rayDepth = texture(DepthBuffer, rayInScreen.xy).x * 2.0 - 1.0;
         if (rayDepth < rayInScreen.z && rayInScreen.z - rayDepth <= MAX_THICKNESS)
         {
-            //rayPos = BinarySearch(rayPos, direction);
-            //rayInScreen = projection * vec4(rayPos, 1.0);
+//            rayPos = BinarySearch(rayPos, direction);
+//            rayInScreen = projection * vec4(rayPos, 1.0);
             return texture(ColorBuffer, rayInScreen.xy).rgb;
             //return vec3(rayInScreen.xy, 1.0);
         }
@@ -175,14 +176,35 @@ vec3 RayMarching(vec3 origin, vec3 direction, int maxStep)
     vec4 originInScreen = projection * vec4(origin, 1.0);
     originInScreen /= originInScreen.w;
     originInScreen.xy = originInScreen.xy * 0.5 + 0.5;
-    return texture(ColorBuffer, originInScreen.xy).rgb;;
+    return texture(ColorBuffer, originInScreen.xy).rgb;
+}
+
+float ShadowTracing(vec3 origin, vec3 direction, float maxStep)
+{
+    vec3 rayPos = origin;
+    for (int i = 1; i < maxStep; i++)
+    {
+        rayPos += direction * STEP_SIZE;
+        vec4 rayInScreen = projection * vec4(rayPos, 1.0);
+        rayInScreen /= rayInScreen.w;
+        rayInScreen.xy = rayInScreen.xy * 0.5 + 0.5;
+        if (rayIsOutofScreen(rayInScreen.xy))
+        {
+            return 0.0;
+        }
+        float rayDepth = texture(DepthBuffer, rayInScreen.xy).x * 2.0 - 1.0;
+        if (rayDepth < rayInScreen.z && rayInScreen.z - rayDepth <= MAX_THICKNESS)
+        {
+            return 1.0;
+        }
+    }
+    return 0.0;
 }
 
 void main()
 {
     vec4 normal = texture(NormalBuffer, Texcoord);
-    normal.xyz *= 2.0;
-    normal.xyz -= 1.0;
+    normal = normalize(normal);
     float metallic = normal.w;
     vec3 viewNormal = vec3(vec4(normal.xyz, 0.0) * inverseView);
     vec4 color = texture(ColorBuffer, Texcoord);
@@ -198,27 +220,35 @@ void main()
     //depth = LinearizeDepth(depth);
     vec3 ndcPos = vec3(screenPos, depth);
     vec4 viewPos = inverseProj * vec4(ndcPos, 1.0);
-    viewPos /= viewPos.w;
+    //viewPos /= viewPos.w;
 
     //shadow mapping
     vec4 worldPos = inverseView * viewPos;
     worldPos /= worldPos.w;
-    worldPos.w = 1.0;
     vec4 lightSpacePos = lightSpaceMatrix * worldPos;
     lightSpacePos /= lightSpacePos.w;
     vec3 projectCoords = lightSpacePos.xyz * 0.5 + 0.5;
     float closeDepth = texture(ShadowMap, projectCoords.xy).r;
     float currentDepth = projectCoords.z;
     float shadow = currentDepth - 0.00005 > closeDepth ? 1.0 : 0.0;
+    if (projectCoords.x > 1.0 || projectCoords.x < 0.0 || projectCoords.y > 1.0 || projectCoords.y < 0.0)
+    {
+        shadow = 0.0;
+    }
+//    vec4 lightViewPos = view * vec4(lightPos, 1.0);
+//    vec3 shadowDir = normalize(vec3(normalize(lightViewPos.xyz - viewPos.xyz)));
+
     vec3 reflectDir = normalize(reflect(viewPos.xyz, viewNormal));
     //vec3 reflectDir = normalize(reflect(-viewDir.xyz, normal.xyz));
     //vec3 V1 = (view * vec4(worldPos.xyz + MAX_STEP * reflectDir, 1.0)).xyz;
     //vec3 V1 = viewPos.xyz + MAX_STEP * reflectDir;
     vec3 rayColor = RayMarching(viewPos.xyz, reflectDir, MAX_STEP);
+    //float shadow = ShadowTracing(viewPos.xyz, shadowDir, MAX_STEP);
     //vec3 rayColor = RayMarching2D(viewPos, reflectDir, MAX_STEP);
     //color.xyz = mix(color.xyz, rayColor, 1 - roughness);
-    color.xyz += rayColor * 0.5;
+    color.xyz += rayColor;
     //float lightDepth = texture(DepthBuffer, Texcoord).r;
+    color.xyz *= (1.0 - shadow);
     FragColor = vec4(color.xyz, 1.0);
     //FragColor = vec4(normal.xyz, 1.0);
     //FragColor = vec4(lightDepth, lightDepth, lightDepth, 1.0);

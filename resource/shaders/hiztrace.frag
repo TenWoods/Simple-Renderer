@@ -35,23 +35,28 @@ bool CrossedCellBoundary(vec2 cellIdxA, vec2 cellIdxB)
     return cellIdxA.x != cellIdxB.x || cellIdxA.y != cellIdxB.y;
 }
 
-float GetMinDepthPlane(vec2 ray, float level)
+vec2 GetMipmapResolution(vec2 screen_size, int mipmap_level)
 {
-
+    return screen_size * pow(0.5, mipmap_level);
 }
 
-vec3 Hiztrace(vec3 origin, vec3 direction, float maxDistance)
-{
-    vec2 crossStep = vec2(direction.x >= 0 ? 1 : -1, direction.y >=0 ? 1 : -1);
-    vec2 crossOffset = crossStep / vec2(width, height) / 128;
-    crossStep = clamp(crossStep, 0.0, 1.0);
+//float GetMinDepthPlane(vec2 ray, float level)
+//{
+//
+//}
 
-    vec3 rayPos = origin;
-    float minZ = rayPos.z;
-    float maxZ = rayPos.z + direction.z * maxDistance;
-    float deltaZ = maxZ - minZ;
-
-}
+//vec3 Hiztrace(vec3 origin, vec3 direction, float maxDistance)
+//{
+//    vec2 crossStep = vec2(direction.x >= 0 ? 1 : -1, direction.y >=0 ? 1 : -1);
+//    vec2 crossOffset = crossStep / vec2(width, height) / 128;
+//    crossStep = clamp(crossStep, 0.0, 1.0);
+//
+//    vec3 rayPos = origin;
+//    float minZ = rayPos.z;
+//    float maxZ = rayPos.z + direction.z * maxDistance;
+//    float deltaZ = maxZ - minZ;
+//
+//}
 
 vec3 BinarySearch(vec3 origin, vec3 direction)
 {
@@ -125,8 +130,8 @@ void main()
     vec4 normal = texture(NormalBuffer, Texcoord);
     normal.xyz *= 2.0;
     normal.xyz -= 1.0;
-    //vec3 viewNormal = vec3(vec4(normal.xyz, 0.0) * inverseView);
-    vec3 viewNormal = normal.xyz;
+    vec3 viewNormal = vec3(vec4(normal.xyz, 0.0) * inverseView);
+    //vec3 viewNormal = normal.xyz;
     vec4 color = vec4(texture(ColorBuffer, Texcoord).xyz, 1.0);
 
     //calculate position
