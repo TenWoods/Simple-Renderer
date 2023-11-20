@@ -30,10 +30,15 @@ namespace SRenderer
         float lastY;
         bool firstMouse;
 
-        unsigned int postFBO;
-        unsigned int hizFBO;
-        unsigned int shadowFBO;
+        unsigned int gbufferPass;
+        unsigned int directPass;
+        unsigned int shadowMapPass;
+        unsigned int hizPass;
+        unsigned int shadowPass;
+
         unsigned int shadowMap;
+        unsigned int shadow;
+        unsigned int directResult, viewPosition;
         unsigned int quadVAO, quadVBO;
         unsigned int GBuffer[3];
         int levelsCount;

@@ -159,9 +159,9 @@ namespace SRenderer
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
-        //init postFBO
-        glGenFramebuffers(1, &postFBO);
-        glBindFramebuffer(GL_FRAMEBUFFER, postFBO);
+        //init G-buffer Pass
+        glGenFramebuffers(1, &gbufferPass);
+        glBindFramebuffer(GL_FRAMEBUFFER, gbufferPass);
 
         glGenTextures(3, GBuffer);
         //Generate Color and Normal buffer
@@ -213,25 +213,28 @@ namespace SRenderer
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, WIDTH, HEIGHT);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
 
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            std::cout << "Framebuffer not complete!" << std::endl;
+//        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+//            std::cout << "Framebuffer not complete!" << std::endl;
 
-        //init hizFBO
-        glGenFramebuffers(1, &hizFBO);
-//        glGenTextures(1, &mipmap);
-//        glBindTexture(GL_TEXTURE_2D, mipmap);
-//        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, WIDTH/2, HEIGHT/2, 0, GL_RED, GL_FLOAT, nullptr);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//        glGenerateTextureMipmap(GL_TEXTURE_2D);
-        //glBindFramebuffer(GL_FRAMEBUFFER, hizFBO);
-        //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+        //init direct pass
+        glGenFramebuffers(1, &directPass);
+        glBindFramebuffer(GL_FRAMEBUFFER, directPass);
+        glGenTextures(1, &directResult);
+        glGenTextures(1, &viewPosition);
+        glBindTexture(GL_TEXTURE_2D, directResult);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, directResult, 0);
+        glBindTexture(GL_TEXTURE_2D, viewPosition);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, viewPosition, 0);
 
         //init shadow map
-        glGenFramebuffers(1, &shadowFBO);
-        glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+        glGenFramebuffers(1, &shadowMapPass);
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowMapPass);
         glGenTextures(1, &shadowMap);
         glBindTexture(GL_TEXTURE_2D, shadowMap);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, WIDTH, HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
@@ -242,6 +245,9 @@ namespace SRenderer
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap, 0);
         glDrawBuffer(GL_NONE);
         glReadBuffer(GL_NONE);
+
+        //init hizPass
+        glGenFramebuffers(1, &hizPass);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glEnable(GL_DEPTH_TEST);
@@ -269,7 +275,7 @@ namespace SRenderer
 
     void SOpenGL::genGbuffer()
     {
-        glBindFramebuffer(GL_FRAMEBUFFER, postFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, gbufferPass);
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         m_shader.use();
@@ -287,7 +293,7 @@ namespace SRenderer
             object->draw(m_shader);
         }
 
-        glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, shadowMapPass);
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shadow_shader.use();
@@ -305,7 +311,7 @@ namespace SRenderer
 
     void SOpenGL::genHizbuffer()
     {
-        glBindFramebuffer(GL_FRAMEBUFFER, hizFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, hizPass);
         glDepthMask(GL_FALSE);
         int lastWidth = WIDTH;
         int lastHeight = HEIGHT;
