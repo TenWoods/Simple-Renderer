@@ -7,7 +7,7 @@ uniform sampler2D ColorBuffer;
 uniform sampler2D NormalBuffer;
 uniform sampler2D DepthBuffer;
 uniform sampler2D PositionBuffer;
-uniform sampler2D ShadowMap;
+//uniform sampler2D ShadowMap;
 uniform mat4 inverseView;
 uniform mat4 view;
 uniform mat4 projection;
@@ -217,18 +217,18 @@ void main()
     //viewPos /= viewPos.w;
 
     //shadow mapping
-    vec4 worldPos = inverseView * viewPos;
-    worldPos /= worldPos.w;
-    vec4 lightSpacePos = lightSpaceMatrix * worldPos;
-    lightSpacePos /= lightSpacePos.w;
-    vec3 projectCoords = lightSpacePos.xyz * 0.5 + 0.5;
-    float closeDepth = texture(ShadowMap, projectCoords.xy).r;
-    float currentDepth = projectCoords.z;
-    float shadow = currentDepth - 0.00005 > closeDepth ? 1.0 : 0.0;
-    if (projectCoords.x > 1.0 || projectCoords.x < 0.0 || projectCoords.y > 1.0 || projectCoords.y < 0.0)
-    {
-        shadow = 0.0;
-    }
+//    vec4 worldPos = inverseView * viewPos;
+//    worldPos /= worldPos.w;
+//    vec4 lightSpacePos = lightSpaceMatrix * worldPos;
+//    lightSpacePos /= lightSpacePos.w;
+//    vec3 projectCoords = lightSpacePos.xyz * 0.5 + 0.5;
+//    //float closeDepth = texture(ShadowMap, projectCoords.xy).r;
+//    float currentDepth = projectCoords.z;
+//    float shadow = currentDepth - 0.00005 > closeDepth ? 1.0 : 0.0;
+//    if (projectCoords.x > 1.0 || projectCoords.x < 0.0 || projectCoords.y > 1.0 || projectCoords.y < 0.0)
+//    {
+//        shadow = 0.0;
+//    }
 //    vec4 lightViewPos = view * vec4(lightPos, 1.0);
 //    vec3 shadowDir = normalize(vec3(normalize(lightViewPos.xyz - viewPos.xyz)));
 

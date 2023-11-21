@@ -42,6 +42,7 @@ namespace SRenderer
         unsigned int directResult, viewPosition;
         unsigned int quadVAO, quadVBO;
         unsigned int GBuffer[3];
+        unsigned int worldPosition;
         int levelsCount;
     private:
         void initWindow();

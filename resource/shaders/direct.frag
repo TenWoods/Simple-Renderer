@@ -15,11 +15,11 @@ uniform mat4 view;
 uniform sampler2D BaseColorMap;
 uniform sampler2D NormalMap;
 uniform sampler2D DepthMap;
+uniform sampler2D PositionMap;
 
 const float PI = 3.14159265359;
-
-float near = 0.1;
-float far  = 1000.0;
+const float near = 0.1;
+const float far  = 1000.0;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -87,6 +87,12 @@ vec3 CalculateLighting(vec3 baseColor, vec3 F0, vec3 viewDir, vec3 lightDir, vec
     return Lo;
 }
 
+float LinearizeDepth(float depth)
+{
+    float z = depth * 2.0 - 1.0; // back to NDC
+    return (2.0 * near * far) / (far + near - z * (far - near));
+}
+
 void main()
 {
     vec4 baseColor = texture(BaseColorMap, Texcoord);
@@ -100,14 +106,15 @@ void main()
     vec4 clipPos = vec4(screenPos, depth, 1.0);
     vec4 viewPos = inverseProj * clipPos;
     viewPos /= viewPos.w;
-    ViewPosition = viewPos;
-    vec3 worldPos = (inverseView * viewPos).xyz;
+    //vec3 worldPos = (inverseView * viewPos).xyz;
+    vec3 worldPos = texture(PositionMap, Texcoord).xyz;
     vec3 F0 = vec3(0.04);
-    //F0 = mix(F0, baseColor.xyz, metallic);
+    F0 = mix(F0, baseColor.xyz, metallic);
     //vec3 viewNormal = vec3(vec4(normal.xyz, 0.0) * inverseView);
     vec3 cameraDir = normalize(cameraPos - worldPos);
     //vec4 viewLightPos = view * vec4(lightPos, 1.0);
     vec3 lightDir = lightPos.xyz - worldPos.xyz;
     vec3 result = CalculateLighting(baseColor.xyz, F0, cameraDir, lightDir, normal.xyz, metallic, roughness);
     DirectColor = vec4(result, 1.0);
+    ViewPosition = vec4(viewPos.xyz, 1.0);
 }
