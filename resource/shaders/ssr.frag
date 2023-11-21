@@ -6,13 +6,12 @@ in vec2 Texcoord;
 uniform sampler2D ColorBuffer;
 uniform sampler2D NormalBuffer;
 uniform sampler2D DepthBuffer;
+uniform sampler2D PositionBuffer;
 uniform sampler2D ShadowMap;
-uniform mat4 inverseProj;
 uniform mat4 inverseView;
 uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 lightSpaceMatrix;
-uniform vec3 lightPos;
 
 const float step = 0.1;
 const float minRayStep = 0.1;
@@ -22,8 +21,8 @@ const float MAX_THICKNESS = 0.001;
 const int MAX_STEP = 1000;
 const float STEP_SIZE = 0.4;
 const int MAX_SEARCH = 5;
-const int width = 512;
-const int height = 512;
+const int width = 1024;
+const int height = 1024;
 
 float LinearizeDepth(float depth)
 {
@@ -213,13 +212,8 @@ void main()
 //        FragColor = vec4(color.xyz, 1.0);
 //        return;
 //    }
-    float roughness = color.a;
-    vec2 screenPos = Texcoord * 2.0 - 1.0;
-    float depth = textureLod(DepthBuffer, Texcoord, 0.0).x;
-    depth = depth * 2.0 - 1.0;
-    //depth = LinearizeDepth(depth);
-    vec3 ndcPos = vec3(screenPos, depth);
-    vec4 viewPos = inverseProj * vec4(ndcPos, 1.0);
+    //float roughness = color.a;
+    vec4 viewPos = texture(PositionBuffer, Texcoord);
     //viewPos /= viewPos.w;
 
     //shadow mapping
@@ -248,7 +242,7 @@ void main()
     //color.xyz = mix(color.xyz, rayColor, 1 - roughness);
     color.xyz += rayColor;
     //float lightDepth = texture(DepthBuffer, Texcoord).r;
-    color.xyz *= (1.0 - shadow);
+    //color.xyz *= (1.0 - shadow);
     FragColor = vec4(color.xyz, 1.0);
     //FragColor = vec4(normal.xyz, 1.0);
     //FragColor = vec4(lightDepth, lightDepth, lightDepth, 1.0);

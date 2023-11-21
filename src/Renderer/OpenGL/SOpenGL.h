@@ -16,9 +16,10 @@ namespace SRenderer
         const int WIDTH = 1024;
         const int HEIGHT = 1024;
         std::vector<std::shared_ptr<SObject>> scene_root;
-        Shader m_shader;
+        Shader gbuffer_shader;
+        Shader direct_shader;
         Shader quad_shader;
-        Shader preCompute_shader;
+        Shader hiz_shader;
         Shader shadow_shader;
         Camera mainCamera;
         Camera lightCamera;
@@ -53,6 +54,7 @@ namespace SRenderer
         void deferredRendering();
 
         void genGbuffer();
+        void directLighting();
         void genHizbuffer();
         void postRendering();
     private:

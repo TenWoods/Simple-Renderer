@@ -7,6 +7,7 @@ layout (location = 1) out vec4 ViewPosition;
 
 uniform vec3 lightPos;
 uniform vec3 lightColor;
+uniform vec3 cameraPos;
 uniform mat4 inverseProj;
 uniform mat4 inverseView;
 uniform mat4 view;
@@ -14,6 +15,11 @@ uniform mat4 view;
 uniform sampler2D BaseColorMap;
 uniform sampler2D NormalMap;
 uniform sampler2D DepthMap;
+
+const float PI = 3.14159265359;
+
+float near = 0.1;
+float far  = 1000.0;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -58,8 +64,9 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 vec3 CalculateLighting(vec3 baseColor, vec3 F0, vec3 viewDir, vec3 lightDir, vec3 normal, float metallic, float roughness)
 {
     vec3 Lo = vec3(0.0);
+    float distance = length(lightDir);
+    lightDir = normalize(lightDir);
     vec3 halfVec = normalize(viewDir + lightDir);
-    float distance = length(lightPos - fs_in.FragPos);
     float attenuation = 1.0 / (distance * distance);
     vec3 radiance = lightColor * attenuation;
 
@@ -85,6 +92,8 @@ void main()
     vec4 baseColor = texture(BaseColorMap, Texcoord);
     vec4 normal = texture(NormalMap, Texcoord);
     float depth = texture(DepthMap, Texcoord).x;
+    depth *= 2.0;
+    depth -= 1.0;
     float metallic = baseColor.w;
     float roughness = normal.w;
     vec2 screenPos = Texcoord * 2.0 - 1.0;
@@ -92,11 +101,13 @@ void main()
     vec4 viewPos = inverseProj * clipPos;
     viewPos /= viewPos.w;
     ViewPosition = viewPos;
+    vec3 worldPos = (inverseView * viewPos).xyz;
     vec3 F0 = vec3(0.04);
-    F0 = mix(F0, baseColor, metallic);
-    vec3 viewNormal = vec3(vec4(normal.xyz, 0.0) * inverseView);
-    vec3 cameraDir = normalize(viewPos.xyz);
-    vec4 viewLightPos = view * vec4(lightPos, 1.0);
-    vec3 lightDir = normalize(viewLightPos.xyz - viewPos.xyz);
-    DirectColor = CalculateLighting(baseColor, F0, cameraDir, lightDir, viewNormal, metallic, roughness);
+    //F0 = mix(F0, baseColor.xyz, metallic);
+    //vec3 viewNormal = vec3(vec4(normal.xyz, 0.0) * inverseView);
+    vec3 cameraDir = normalize(cameraPos - worldPos);
+    //vec4 viewLightPos = view * vec4(lightPos, 1.0);
+    vec3 lightDir = lightPos.xyz - worldPos.xyz;
+    vec3 result = CalculateLighting(baseColor.xyz, F0, cameraDir, lightDir, normal.xyz, metallic, roughness);
+    DirectColor = vec4(result, 1.0);
 }

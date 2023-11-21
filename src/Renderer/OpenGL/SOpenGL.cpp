@@ -32,8 +32,9 @@ namespace SRenderer
     void SOpenGL::renderLoop()
     {
 #ifdef __linux__
-        m_shader = Shader("../resource/shaders/svertex.vert", "../resource/shaders/gbuffer.frag");
-        preCompute_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/hizbuffer.frag");
+        gbuffer_shader = Shader("../resource/shaders/svertex.vert", "../resource/shaders/gbuffer.frag");
+        direct_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/direct.frag");
+        hiz_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/hizbuffer.frag");
         quad_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/ssr.frag");
         shadow_shader = Shader("../resource/shaders/lightDepth.vert", "../resource/shaders/lightDepth.frag");
         addModel("../resource/model/Sponza/glTF/Sponza.gltf");
@@ -43,8 +44,8 @@ namespace SRenderer
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 #elif _WIN64
-        m_shader = Shader("../../resource/shaders/svertex.vert", "../../resource/shaders/gbuffer.frag");
-        preCompute_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hizbuffer.frag");
+        gbuffer_shader = Shader("../../resource/shaders/svertex.vert", "../../resource/shaders/gbuffer.frag");
+        hiz_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hizbuffer.frag");
         quad_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hiztrace.frag");
         shadow_shader = Shader("../../resource/shaders/lightDepth.vert", "../../resource/shaders/lightDepth.frag");
         addModel("../../resource/model/sponza/Sponza.gltf");
@@ -56,13 +57,8 @@ namespace SRenderer
 
 #endif
         lightCamera.set_Zoom(90.0f);
-        quad_shader.use();
-        quad_shader.setInt("ColorBuffer", 0);
-        quad_shader.setInt("NormalBuffer", 1);
-        quad_shader.setInt("DepthBuffer", 2);
-        quad_shader.setInt("ShadowMap", 3);
-        preCompute_shader.use();
-        preCompute_shader.setInt("Depthmap", 0);
+        //quad_shader.use();
+        //hiz_shader.use();
         scene_root[0]->set_scale(glm::vec3(0.1f, 0.1f, 0.1f));
         scene_root[0]->set_position(glm::vec3(0.0f, 0.0f, 0.0f));
         scene_root[1]->set_scale(glm::vec3(20.0f, 20.0f, 20.0f));
@@ -110,10 +106,10 @@ namespace SRenderer
 
     void SOpenGL::set_light()
     {
-        m_shader.use();
+        gbuffer_shader.use();
         //TODO: support multi-light
-        m_shader.setVec3("lightPos", lights[0].get_position());
-        m_shader.setVec3("lightColor", lights[0].get_color());
+        gbuffer_shader.setVec3("lightPos", lights[0].get_position());
+        gbuffer_shader.setVec3("lightColor",lights[0].get_color());
 //        std::cout << lights[0].get_position().x << ',' << lights[0].get_position().y << ','  << lights[0].get_position().z;
 //        std::cout << lights[0].get_color().x << ',' << lights[0].get_color().y << ',' << lights[0].get_color().z << std::endl;
     }
@@ -230,7 +226,10 @@ namespace SRenderer
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, viewPosition, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, viewPosition, 0);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+//        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+//            std::cout << "Framebuffer not complete!" << std::endl;
 
         //init shadow map
         glGenFramebuffers(1, &shadowMapPass);
@@ -263,7 +262,9 @@ namespace SRenderer
 
             genGbuffer();
 
-            genHizbuffer();
+            directLighting();
+
+            //genHizbuffer();
 
             postRendering();
 
@@ -278,21 +279,22 @@ namespace SRenderer
         glBindFramebuffer(GL_FRAMEBUFFER, gbufferPass);
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        m_shader.use();
+        gbuffer_shader.use();
         glm::mat4 projection = mainCamera.get_Projection(WIDTH, HEIGHT, false);
         glm::mat4 view = mainCamera.get_ViewMatrix();
-        m_shader.setMat4("projection", projection);
-        m_shader.setMat4("view", view);
-        m_shader.setVec3("cameraPos", mainCamera.get_Position());
+        gbuffer_shader.setMat4("projection", projection);
+        gbuffer_shader.setMat4("view", view);
+        gbuffer_shader.setVec3("cameraPos", mainCamera.get_Position());
         set_light();
-        //m_shader.setMat4("model", glm::mat4(1.0f));
-        //scene_root[1]->draw(m_shader);
+        //gbuffer_shader.setMat4("model", glm::mat4(1.0f));
+        //scene_root[1]->draw(gbuffer_shader);
         for (auto& object : scene_root)
         {
             //std::cout << "Draw" << std::endl;
-            object->draw(m_shader);
+            object->draw(gbuffer_shader);
         }
 
+        // draw shadow map
         glBindFramebuffer(GL_FRAMEBUFFER, shadowMapPass);
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -309,6 +311,32 @@ namespace SRenderer
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
+    void SOpenGL::directLighting()
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, directPass);
+        direct_shader.use();
+        direct_shader.setVec3("lightPos", lights[0].get_position());
+        direct_shader.setVec3("lightColor", lights[0].get_color());
+        direct_shader.setVec3("cameraPos", mainCamera.get_Position());
+        direct_shader.setMat4("inverseProj", mainCamera.get_invProjection(WIDTH, HEIGHT));
+        direct_shader.setMat4("inverseView", mainCamera.get_invView());
+        direct_shader.setMat4("view", mainCamera.get_ViewMatrix());
+        direct_shader.setInt("BaseColorMap", 0);
+        direct_shader.setInt("NormalMap", 1);
+        direct_shader.setInt("DepthMap", 2);
+
+        for (int i = 0; i < 3; i++)
+        {
+            glActiveTexture(GL_TEXTURE0 + i);
+            glBindTexture(GL_TEXTURE_2D, GBuffer[i]);
+        }
+
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+
+    }
+
     void SOpenGL::genHizbuffer()
     {
         glBindFramebuffer(GL_FRAMEBUFFER, hizPass);
@@ -316,7 +344,8 @@ namespace SRenderer
         int lastWidth = WIDTH;
         int lastHeight = HEIGHT;
 
-        preCompute_shader.use();
+        hiz_shader.use();
+        hiz_shader.setInt("Depthmap", 0);
 
         // bind depth buffer
         glActiveTexture(GL_TEXTURE0);
@@ -326,8 +355,8 @@ namespace SRenderer
         {
             //glClearColor(0.0, 0.0, 0.0, 1.0);
             //glClear(GL_COLOR_BUFFER_BIT);
-            preCompute_shader.setVec2i("previousDim", glm::ivec2(lastWidth, lastHeight));
-            preCompute_shader.setInt("previousLevel", i-1);
+            hiz_shader.setVec2i("previousDim", glm::ivec2(lastWidth, lastHeight));
+            hiz_shader.setInt("previousLevel", i - 1);
             lastWidth /= 2;
             lastHeight /= 2;
             lastWidth = lastWidth > 0 ? lastWidth : 1;
@@ -343,25 +372,36 @@ namespace SRenderer
 
     void SOpenGL::postRendering()
     {
+        //TODO:update
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         quad_shader.use();
-        quad_shader.setMat4("inverseProj", mainCamera.get_invProjection(WIDTH, HEIGHT));
+        quad_shader.setInt("ColorBuffer", 0);
+        quad_shader.setInt("NormalBuffer", 1);
+        quad_shader.setInt("DepthBuffer", 2);
+        quad_shader.setInt("ShadowMap", 3);
         quad_shader.setMat4("inverseView", mainCamera.get_invView());
         quad_shader.setMat4("view", mainCamera.get_ViewMatrix());
         quad_shader.setMat4("projection", mainCamera.get_Projection(WIDTH, HEIGHT, false));
-        quad_shader.setMat4("view", mainCamera.get_ViewMatrix());
-        quad_shader.setVec3("cameraPos", mainCamera.get_Position());
-        quad_shader.setVec3("lightPos", lights[0].get_position());
+//        quad_shader.setVec3("cameraPos", mainCamera.get_Position());
+//        quad_shader.setVec3("lightPos", lights[0].get_position());
         quad_shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        for (int i = 0; i < 3; i++)
-        {
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, GBuffer[i]);
-        }
-        glActiveTexture(GL_TEXTURE0 + 3);
-        glBindTexture(GL_TEXTURE_2D, shadowMap);
+//        for (int i = 0; i < 3; i++)
+//        {
+//            glActiveTexture(GL_TEXTURE0 + i);
+//            glBindTexture(GL_TEXTURE_2D, GBuffer[i]);
+//        }
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, directResult);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, GBuffer[1]);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, GBuffer[2]);
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, viewPosition);
+//        glActiveTexture(GL_TEXTURE0 + 3);
+//        glBindTexture(GL_TEXTURE_2D, shadowMap);
         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
         glBindVertexArray(quadVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -380,18 +420,18 @@ namespace SRenderer
             processInput(window);
             //glClearColor(1.0, 1.0, 1.0, 1.0);
             //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            m_shader.use();
+            gbuffer_shader.use();
             glm::mat4 projection = mainCamera.get_Projection(WIDTH, HEIGHT, false);
-            m_shader.setMat4("projection", projection);
-            m_shader.setMat4("view", mainCamera.get_ViewMatrix());
-            m_shader.setVec3("cameraPos", mainCamera.get_Position());
+            gbuffer_shader.setMat4("projection", projection);
+            gbuffer_shader.setMat4("view", mainCamera.get_ViewMatrix());
+            gbuffer_shader.setVec3("cameraPos", mainCamera.get_Position());
             set_light();
-            //m_shader.setMat4("model", glm::mat4(1.0f));
-            //scene_root[1]->draw(m_shader);
+            //gbuffer_shader.setMat4("model", glm::mat4(1.0f));
+            //scene_root[1]->draw(gbuffer_shader);
             for (auto& object : scene_root)
             {
                 //std::cout << "Draw" << std::endl;
-                object->draw(m_shader);
+                object->draw(gbuffer_shader);
             }
             glfwSwapBuffers(window);
             glfwPollEvents();
