@@ -87,18 +87,42 @@ vec3 LinearTrace(vec3 origin, vec3 direction, float maxDistance)
     vec3 rayPos = origin + dp;
     vec3 dir = dp;
     vec3 result = vec3(0.0);
-    for (int i = 0; i < max_dist && i < MAX_STEP; i++)
+    int hit_index = -1;
+    for (int i = 0; i < max_dist && i < MAX_STEP; i+=4)
     {
-        rayPos += i * dir;
-        float rayDepth = texture(DepthBuffer, rayPos.xy).r;
-        rayDepth *= 2.0;
-        rayDepth -= 1.0;
-        if (rayDepth <= rayPos.z && rayPos.z - rayDepth <= MAX_THICKNESS)
-        {
-            //vec3 rayResult = BinarySearch(rayPos, dir);
-            result = texture(ColorBuffer, rayPos.xy).xyz;
+//        rayPos += i * dir;
+//        float rayDepth = texture(DepthBuffer, rayPos.xy).r;
+//        rayDepth *= 2.0;
+//        rayDepth -= 1.0;
+//        if (rayDepth <= rayPos.z && rayPos.z - rayDepth <= MAX_THICKNESS)
+//        {
+//            //vec3 rayResult = BinarySearch(rayPos, dir);
+//            result = texture(ColorBuffer, rayPos.xy).xyz;
+//            break;
+//        }
+        vec3 rayPos0 = rayPos;
+        vec3 rayPos1 = rayPos + dir;
+        vec3 rayPos2 = rayPos + 2.0 * dir;
+        vec3 rayPos3 = rayPos + 3.0 * dir;
+
+        float depth0 = texture(DepthBuffer, rayPos0.xy).x * 2.0 - 1.0;
+        float depth1 = texture(DepthBuffer, rayPos1.xy).x * 2.0 - 1.0;
+        float depth2 = texture(DepthBuffer, rayPos2.xy).x * 2.0 - 1.0;
+        float depth3 = texture(DepthBuffer, rayPos3.xy).x * 2.0 - 1.0;
+
+        hit_index = (rayPos0.z >= depth0 && rayPos0.z - depth0 <= MAX_THICKNESS) ? i+0 : hit_index;
+        hit_index = (rayPos1.z >= depth1 && rayPos1.z - depth1 <= MAX_THICKNESS) ? i+1 : hit_index;
+        hit_index = (rayPos2.z >= depth2 && rayPos2.z - depth2 <= MAX_THICKNESS) ? i+2 : hit_index;
+        hit_index = (rayPos3.z >= depth3 && rayPos3.z - depth3 <= MAX_THICKNESS) ? i+3 : hit_index;
+
+        if (hit_index != -1)
             break;
-        }
+        rayPos = rayPos3 + dir;
+    }
+    if (hit_index != -1)
+    {
+        vec3 intersection = origin + hit_index * dir;
+        result = texture(ColorBuffer, intersection.xy).xyz;
     }
     return result;
 }
