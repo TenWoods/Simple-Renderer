@@ -33,9 +33,10 @@ namespace SRenderer
             glm::mat4 model(1.0f);
             model = glm::translate(model, position);
             model = glm::scale(model, scale);
-            shader.setMat4("model", model);
             for (const auto& mesh : meshes)
             {
+                glm::mat4 temp = glm::translate(model, mesh.position);
+                shader.setMat4("model", temp);
                 mesh.draw(shader);
             }
             //std::cout << std::endl << std::endl;
@@ -65,7 +66,12 @@ namespace SRenderer
             {
                 //std::cout << "Process Mesh " << i << std::endl;
                 aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-                meshes.emplace_back(processMesh(mesh, scene));
+                Mesh temp_mesh = processMesh(mesh, scene);
+                temp_mesh.position[0] = node->mTransformation.a4;
+                temp_mesh.position[1] = node->mTransformation.b4;
+                temp_mesh.position[2] = node->mTransformation.c4;
+                //std::cout << temp_mesh.position[0] << ' ' << temp_mesh.position[1] << ' ' << temp_mesh.position[2] << std::endl;
+                meshes.emplace_back(std::move(temp_mesh));
             }
             //std::cout << "Children Num: " << node->mNumChildren << std::endl;
             for (int i = 0; i < node->mNumChildren; i++)

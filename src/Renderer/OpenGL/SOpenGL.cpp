@@ -45,11 +45,12 @@ namespace SRenderer
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 #elif _WIN64
         gbuffer_shader = Shader("../../resource/shaders/svertex.vert", "../../resource/shaders/gbuffer.frag");
+        direct_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/direct.frag");
         hiz_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hizbuffer.frag");
         quad_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hiztrace.frag");
         shadow_shader = Shader("../../resource/shaders/lightDepth.vert", "../../resource/shaders/lightDepth.frag");
         addModel("../../resource/model/sponza/Sponza.gltf");
-        addModel("../../resource/model/bottle/WaterBottle.gltf");
+        addModel("../../resource/model/game/ABeautifulGame.gltf");
 //        addModel("../../resource/model/bottle/WaterBottle.gltf");
 //        addModel("../../resource/model/bottle/WaterBottle.gltf");
 //        addModel("../../resource/model/bottle/WaterBottle.gltf");
@@ -267,7 +268,7 @@ namespace SRenderer
 
             directLighting();
 
-            //genHizbuffer();
+            genHizbuffer();
 
             postRendering();
 

@@ -15,6 +15,7 @@ namespace SRenderer
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
         std::vector<Texture> textures;
+        glm::vec3 position;
     private:
         unsigned int VAO, VBO, EBO;
     private:

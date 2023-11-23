@@ -18,7 +18,7 @@ const int width = 1024;
 const int height = 1024;
 const int MAX_STEP = 10000;
 const float MAX_THICKNESS = 0.0001;
-const int MAX_LEVEL = 4;
+const int MAX_MIPMAP_LEVEL = 4;
 
 vec3 IntersectionDepthPlane(vec3 origin, vec3 direction, float t)
 {
@@ -28,6 +28,26 @@ vec3 IntersectionDepthPlane(vec3 origin, vec3 direction, float t)
 vec2 GetCellCount(vec2 size, float level)
 {
     return floor(size / (level > 0.0 ? exp2(level) : 1.0));
+}
+
+vec2 GetCell(vec2 pos, vec2 cell_count)
+{
+    return vec2(floor(pos * cell_count));
+}
+
+vec3 IntersectCellBoundary(vec3 o, vec3 d, vec2 cell, vec2 cell_count, vec2 crossStep, vec2 crossOffset)
+{
+    vec3 intersection = vec3(0.0f);
+    vec2 index = cell + crossStep;
+    vec2 boundary = index / cell_count;
+    boundary += crossOffset;
+
+    vec2 delta = boundary - o.xy;
+    delta /= d.xy;
+    float t = min(delta.x, delta.y);
+
+    intersection = IntersectionDepthPlane(o, d, t);
+    return intersection;
 }
 
 bool CrossedCellBoundary(vec2 cellIdxA, vec2 cellIdxB)
@@ -40,39 +60,54 @@ vec2 GetMipmapResolution(vec2 screen_size, int mipmap_level)
     return screen_size * pow(0.5, mipmap_level);
 }
 
-//float GetMinDepthPlane(vec2 ray, float level)
-//{
-//
-//}
-
-//vec3 Hiztrace(vec3 origin, vec3 direction, float maxDistance)
-//{
-//    vec2 crossStep = vec2(direction.x >= 0 ? 1 : -1, direction.y >=0 ? 1 : -1);
-//    vec2 crossOffset = crossStep / vec2(width, height) / 128;
-//    crossStep = clamp(crossStep, 0.0, 1.0);
-//
-//    vec3 rayPos = origin;
-//    float minZ = rayPos.z;
-//    float maxZ = rayPos.z + direction.z * maxDistance;
-//    float deltaZ = maxZ - minZ;
-//
-//}
-
-vec3 BinarySearch(vec3 origin, vec3 direction)
+float GetMinDepthPlane(vec2 pos, float level)
 {
-    float sign = -1.0;
-    vec3 rayPos = origin;
-    for (int i = 0; i < 8; i++)
-    {
-        direction *= 0.5;
-        rayPos += sign * direction;
-        float rayDepth = texture(DepthBuffer, rayPos.xy).x;
-        rayDepth *= 2.0;
-        rayDepth -= 1.0;
-        sign = (rayDepth <= rayPos.z && rayPos.z - rayDepth <= MAX_THICKNESS) ? 1.0 : -1.0;
-    }
-    return rayPos;
+    return textureLod(DepthBuffer, pos, level).x * 2.0 - 1.0;
 }
+
+bool Hiztrace(vec3 origin, vec3 direction, float maxDistance, out vec3 intersection)
+{
+    vec2 crossStep = vec2(direction.x >= 0 ? 1 : -1, direction.y >=0 ? 1 : -1);
+    vec2 crossOffset = crossStep / vec2(width, height) / 128;
+    crossStep = clamp(crossStep, 0.0, 1.0);
+
+    vec3 rayPos = origin;
+    float minZ = rayPos.z;
+    float maxZ = rayPos.z + direction.z * maxDistance;
+    float deltaZ = maxZ - minZ;
+
+    vec3 o = rayPos;
+    vec3 d = direction * maxDistance;
+
+    int startLevel = 2;
+    int stopLevel = 0;
+
+    vec2 startCellCount = vec2(GetCellCount(vec2(width, height), startLevel));
+    vec2 rayCell = GetCell(rayPos.xy, startCellCount);
+    rayPos = IntersectCellBoundary(rayPos, direction, rayCell, startCellCount, crossStep, crossOffset * 128.0 * 2.0);
+
+    int level = startLevel;
+    int iter = 0;
+    bool isBackward = direction.z < 0;
+    float dir = isBackward ? -1.0 : 1.0;
+    while (level >= stopLevel && rayPos.z * dir <= maxZ * dir && ++iter < MAX_STEP)
+    {
+        vec2 cellCount = vec2(GetCellCount(vec2(width, height), level));
+        vec2 oldCellIdx = GetCell(rayPos.xy, cellCount);
+
+        float cell_minZ = GetMinDepthPlane((oldCellIdx+0.5f)/cellCount, level);
+        vec3 tmpRay = ((cell_minZ > rayPos.z) && !isBackward) ? IntersectionDepthPlane(o, d, (cell_minZ - minZ) / deltaZ) : rayPos;
+        vec2 newCellIdx = GetCell(tmpRay.xy, cellCount);
+        float thickness = level == 0 ? (rayPos.z - cell_minZ) : 0.0;
+        bool crossed = (isBackward && (cell_minZ > rayPos.z)) || (thickness > MAX_THICKNESS) || CrossedCellBoundary(oldCellIdx, newCellIdx);
+        rayPos = crossed ? IntersectCellBoundary(o, d, oldCellIdx, cellCount, crossStep, crossOffset) : tmpRay;
+        level = crossed ? min(MAX_MIPMAP_LEVEL, level + 1) : level - 1;
+    }
+    bool intersected = (level < stopLevel);
+    intersection = intersected ? rayPos : vec3(0.0);
+    return intersected;
+}
+
 
 vec3 LinearTrace(vec3 origin, vec3 direction, float maxDistance)
 {
@@ -162,7 +197,15 @@ void main()
     maxDistance = min(maxDistance, reflectDirClip.y >= 0 ? (1 - beginClipPos.y)/reflectDirClip.y : -beginClipPos.y/reflectDirClip.y);
     maxDistance = min(maxDistance, reflectDirClip.z >= 0 ? (1 - beginClipPos.z)/reflectDirClip.z : -beginClipPos.z/reflectDirClip.z);
 
-    vec3 rayColor = LinearTrace(beginClipPos.xyz, reflectDirClip, maxDistance);
-    color.xyz += rayColor.xyz;
+    vec3 resultPos = vec3(0.0);
+    if (Hiztrace(beginClipPos.xyz, reflectDirClip, maxDistance,resultPos))
+    {
+        vec3 rayColor = texture(ColorBuffer, resultPos.xy).xyz;
+        color.xyz += rayColor.xyz * 0.5;
+    }
+
+
+    //vec3 rayColor = LinearTrace(beginClipPos.xyz, reflectDirClip, maxDistance);
+    //color.xyz += rayColor.xyz * 0.5;
     FragColor = color;
 }
