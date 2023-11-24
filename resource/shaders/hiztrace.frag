@@ -169,8 +169,8 @@ void main()
 //    normal.xyz -= 1.0;
     vec3 viewNormal = vec3(vec4(normal.xyz, 0.0) * inverseView);
     //vec3 viewNormal = normal.xyz;
-    vec4 color = vec4(texture(ColorBuffer, Texcoord).xyz, 1.0);
-
+    //vec4 color = vec4(texture(ColorBuffer, Texcoord).xyz, 1.0);
+    vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
     //calculate position
     vec3 worldPos = texture(PositionBuffer, Texcoord).xyz;
 //    vec2 screenPos = Texcoord * 2.0 - 1.0;
@@ -201,7 +201,7 @@ void main()
     if (Hiztrace(beginClipPos.xyz, reflectDirClip, maxDistance,resultPos))
     {
         vec3 rayColor = texture(ColorBuffer, resultPos.xy).xyz;
-        color.xyz += rayColor.xyz * 0.5;
+        color.xyz = rayColor.xyz;
     }
 
 

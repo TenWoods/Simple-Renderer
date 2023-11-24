@@ -35,11 +35,11 @@ namespace SRenderer
         gbuffer_shader = Shader("../resource/shaders/svertex.vert", "../resource/shaders/gbuffer.frag");
         direct_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/direct.frag");
         hiz_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/hizbuffer.frag");
-        quad_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/hiztrace.frag");
+        ssr_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/hiztrace.frag");
         shadow_shader = Shader("../resource/shaders/lightDepth.vert", "../resource/shaders/lightDepth.frag");
         addModel("../resource/model/Sponza/glTF/Sponza.gltf");
-        addModel("../resource/model/FlightHelmet/glTF/FlightHelmet.gltf");
-        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
+        addModel("../resource/model/AGAME/ABeautifulGame.gltf");
+//        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
@@ -47,7 +47,7 @@ namespace SRenderer
         gbuffer_shader = Shader("../../resource/shaders/svertex.vert", "../../resource/shaders/gbuffer.frag");
         direct_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/direct.frag");
         hiz_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hizbuffer.frag");
-        quad_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hiztrace.frag");
+        ssr_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hiztrace.frag");
         shadow_shader = Shader("../../resource/shaders/lightDepth.vert", "../../resource/shaders/lightDepth.frag");
         addModel("../../resource/model/sponza/Sponza.gltf");
         addModel("../../resource/model/game/ABeautifulGame.gltf");
@@ -58,11 +58,11 @@ namespace SRenderer
 
 #endif
         lightCamera.set_Zoom(90.0f);
-        //quad_shader.use();
+        //ssr_shader.use();
         //hiz_shader.use();
         scene_root[0]->set_scale(glm::vec3(0.1f, 0.1f, 0.1f));
         scene_root[0]->set_position(glm::vec3(0.0f, 0.0f, 0.0f));
-        scene_root[1]->set_scale(glm::vec3(20.0f, 20.0f, 20.0f));
+        scene_root[1]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
         scene_root[1]->set_position(glm::vec3(0.0f, 0.0f, 0.0f));
 //        scene_root[2]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
 //        scene_root[2]->set_position(glm::vec3(15.0f, 6.0f, 0.0f));
@@ -235,7 +235,7 @@ namespace SRenderer
 //        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 //            std::cout << "Framebuffer not complete!" << std::endl;
 
-        //init shadow map
+        //init shadow map pass
         glGenFramebuffers(1, &shadowMapPass);
         glBindFramebuffer(GL_FRAMEBUFFER, shadowMapPass);
         glGenTextures(1, &shadowMap);
@@ -251,6 +251,17 @@ namespace SRenderer
 
         //init hizPass
         glGenFramebuffers(1, &hizPass);
+
+        //init ssrPass
+        glGenFramebuffers(1, &ssrPass);
+        glBindFramebuffer(GL_FRAMEBUFFER, ssrPass);
+        glGenTextures(1, &ssrResult);
+        glBindTexture(GL_TEXTURE_2D, ssrResult);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_INT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssrResult, 0);
+        glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glEnable(GL_DEPTH_TEST);
@@ -270,7 +281,9 @@ namespace SRenderer
 
             genHizbuffer();
 
-            postRendering();
+            ssr();
+
+            //postRendering();
 
             glfwSwapBuffers(window);
             glfwPollEvents();
@@ -375,22 +388,21 @@ namespace SRenderer
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    void SOpenGL::postRendering()
+    void SOpenGL::ssr()
     {
-        //TODO:update
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        quad_shader.use();
-        quad_shader.setInt("ColorBuffer", 0);
-        quad_shader.setInt("NormalBuffer", 1);
-        quad_shader.setInt("DepthBuffer", 2);
-        quad_shader.setInt("PositionBuffer", 3);
-        quad_shader.setMat4("inverseProj", mainCamera.get_invProjection(WIDTH, HEIGHT));
-        quad_shader.setMat4("inverseView", mainCamera.get_invView());
-        quad_shader.setMat4("view", mainCamera.get_ViewMatrix());
-        quad_shader.setMat4("projection", mainCamera.get_Projection(WIDTH, HEIGHT, false));
-        quad_shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        ssr_shader.use();
+        ssr_shader.setInt("ColorBuffer", 0);
+        ssr_shader.setInt("NormalBuffer", 1);
+        ssr_shader.setInt("DepthBuffer", 2);
+        ssr_shader.setInt("PositionBuffer", 3);
+        ssr_shader.setMat4("inverseProj", mainCamera.get_invProjection(WIDTH, HEIGHT));
+        ssr_shader.setMat4("inverseView", mainCamera.get_invView());
+        ssr_shader.setMat4("view", mainCamera.get_ViewMatrix());
+        ssr_shader.setMat4("projection", mainCamera.get_Projection(WIDTH, HEIGHT, false));
+        ssr_shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, directResult);
         glActiveTexture(GL_TEXTURE1);
@@ -405,6 +417,16 @@ namespace SRenderer
         glBindVertexArray(quadVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
+    }
+
+    void SOpenGL::pre_convolution()
+    {
+
+    }
+
+    void SOpenGL::postRendering()
+    {
+
     }
 
     void SOpenGL::forwardRendering()

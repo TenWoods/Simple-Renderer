@@ -18,7 +18,7 @@ namespace SRenderer
         std::vector<std::shared_ptr<SObject>> scene_root;
         Shader gbuffer_shader;
         Shader direct_shader;
-        Shader quad_shader;
+        Shader ssr_shader;
         Shader hiz_shader;
         Shader shadow_shader;
         Camera mainCamera;
@@ -32,14 +32,17 @@ namespace SRenderer
         bool firstMouse;
 
         unsigned int gbufferPass;
-        unsigned int directPass;
         unsigned int shadowMapPass;
+        unsigned int directPass;
         unsigned int hizPass;
+        unsigned int ssrPass;
+        unsigned int pre_convolutionPass;
         unsigned int shadowPass;
 
         unsigned int shadowMap;
         unsigned int shadow;
         unsigned int directResult, viewPosition;
+        unsigned int ssrResult;
         unsigned int quadVAO, quadVBO;
         unsigned int GBuffer[3];
         unsigned int worldPosition;
@@ -57,6 +60,8 @@ namespace SRenderer
         void genGbuffer();
         void directLighting();
         void genHizbuffer();
+        void ssr();
+        void pre_convolution();
         void postRendering();
     private:
         static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
