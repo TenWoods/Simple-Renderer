@@ -47,6 +47,7 @@ namespace SRenderer
         gbuffer_shader = Shader("../../resource/shaders/svertex.vert", "../../resource/shaders/gbuffer.frag");
         direct_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/direct.frag");
         hiz_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hizbuffer.frag");
+        blur_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/blur.frag");
         ssr_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hiztrace.frag");
         shadow_shader = Shader("../../resource/shaders/lightDepth.vert", "../../resource/shaders/lightDepth.frag");
         addModel("../../resource/model/sponza/Sponza.gltf");
@@ -184,7 +185,7 @@ namespace SRenderer
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+1, GL_TEXTURE_2D, GBuffer[1], 0);
         //Generate Depth buffer
-        levelsCount = 1 + (int)floorf(log2f(fmaxf(WIDTH, HEIGHT)));
+        levelsCount = 7;
         glBindTexture(GL_TEXTURE_2D, GBuffer[2]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, WIDTH, HEIGHT, 0, GL_RED, GL_FLOAT, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -223,6 +224,11 @@ namespace SRenderer
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levelsCount - 1);
+        glGenerateMipmap(GL_TEXTURE_2D);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, directResult, 0);
         glBindTexture(GL_TEXTURE_2D, viewPosition);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
@@ -252,16 +258,28 @@ namespace SRenderer
         //init hizPass
         glGenFramebuffers(1, &hizPass);
 
-        //init ssrPass
-        glGenFramebuffers(1, &ssrPass);
-        glBindFramebuffer(GL_FRAMEBUFFER, ssrPass);
-        glGenTextures(1, &ssrResult);
-        glBindTexture(GL_TEXTURE_2D, ssrResult);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_INT, nullptr);
+        //init pre-convolution Pass
+        glGenFramebuffers(1, &pre_convolutionPass);
+        glGenTextures(1, &tempTex);
+        glBindTexture(GL_TEXTURE_2D, tempTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssrResult, 0);
-        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levelsCount - 1);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        //init ssrPass
+//        glGenFramebuffers(1, &ssrPass);
+//        glBindFramebuffer(GL_FRAMEBUFFER, ssrPass);
+//        glGenTextures(1, &ssrResult);
+//        glBindTexture(GL_TEXTURE_2D, ssrResult);
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_INT, nullptr);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssrResult, 0);
+//        glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glEnable(GL_DEPTH_TEST);
@@ -280,6 +298,8 @@ namespace SRenderer
             directLighting();
 
             genHizbuffer();
+
+            pre_convolution();
 
             ssr();
 
@@ -388,6 +408,46 @@ namespace SRenderer
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
+    void SOpenGL::pre_convolution()
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, pre_convolutionPass);
+        glDepthMask(GL_FALSE);
+        int lastWidth = WIDTH;
+        int lastHeight = HEIGHT;
+
+        blur_shader.use();
+        blur_shader.setInt("ColorBuffer", 0);
+
+
+        for (int i = 1; i < levelsCount; i++)
+        {
+            // bind Color buffer
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, directResult);
+            blur_shader.setInt("previousLevel", i - 1);
+            blur_shader.setBool("isVertical", true);
+            lastWidth /= 2;
+            lastHeight /= 2;
+            lastWidth = lastWidth > 0 ? lastWidth : 1;
+            lastHeight = lastHeight > 0 ? lastHeight : 1;
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tempTex, i);
+            glBindVertexArray(quadVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, tempTex);
+            blur_shader.setInt("previousLevel", i - 1);
+            blur_shader.setBool("isVertical", false);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, directResult, i);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glBindVertexArray(0);
+//            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tempTex, 0);
+        }
+        glDepthMask(GL_TRUE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    }
+
     void SOpenGL::ssr()
     {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -417,11 +477,6 @@ namespace SRenderer
         glBindVertexArray(quadVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
-    }
-
-    void SOpenGL::pre_convolution()
-    {
-
     }
 
     void SOpenGL::postRendering()

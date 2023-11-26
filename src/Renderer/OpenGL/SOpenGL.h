@@ -20,6 +20,7 @@ namespace SRenderer
         Shader direct_shader;
         Shader ssr_shader;
         Shader hiz_shader;
+        Shader blur_shader;
         Shader shadow_shader;
         Camera mainCamera;
         Camera lightCamera;
@@ -42,6 +43,7 @@ namespace SRenderer
         unsigned int shadowMap;
         unsigned int shadow;
         unsigned int directResult, viewPosition;
+        unsigned int tempTex;
         unsigned int ssrResult;
         unsigned int quadVAO, quadVBO;
         unsigned int GBuffer[3];

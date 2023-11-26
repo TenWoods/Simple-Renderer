@@ -7,6 +7,7 @@ uniform sampler2D ColorBuffer;
 uniform sampler2D NormalBuffer;
 uniform sampler2D DepthBuffer;
 uniform sampler2D PositionBuffer;
+uniform sampler2D VisibilityBuffer;
 uniform mat4 inverseProj;
 uniform mat4 inverseView;
 uniform mat4 view;
@@ -19,6 +20,8 @@ const int height = 1024;
 const int MAX_STEP = 10000;
 const float MAX_THICKNESS = 0.0001;
 const int MAX_MIPMAP_LEVEL = 4;
+const float MIN_SPECULAR_POWER = 0.1;
+const float MAX_SPECULAR_POWER = 1024.0;
 
 vec3 IntersectionDepthPlane(vec3 origin, vec3 direction, float t)
 {
@@ -65,6 +68,60 @@ float GetMinDepthPlane(vec2 pos, float level)
     return textureLod(DepthBuffer, pos, level).x * 2.0 - 1.0;
 }
 
+float RoughnessToSpecularPower(float roughness)
+{
+    return mix(MAX_SPECULAR_POWER, MIN_SPECULAR_POWER, pow(roughness, 0.1));
+}
+
+float RoughnessToConeAngle(float roughness)
+{
+    return mix(0.0, 1.0, roughness);
+}
+
+float SpecularPowerToConeAngle(float specularPower)
+{
+    if (specularPower < MAX_SPECULAR_POWER)
+    {
+        /* Based on phong reflection model */
+        const float xi = 0.244;
+        float exponent = 1.0 / (specularPower + 1.0);
+        return acos(pow(xi, exponent));
+    }
+    return 0.0;
+}
+
+float IsoscelesTriangleOpposite(float adjacentLength, float coneTheta)
+{
+    /*
+    Simple trig and algebra - soh, cah, toa - tan(theta) = opp/adj,
+    opp = tan(theta) * adj, then multiply by 2 for isosceles triangle base
+    */
+    return 2.0 * tan(coneTheta) * adjacentLength;
+}
+
+float IsoscelesTriangleInRadius(float a, float h)
+{
+    float h4 = h*4.0;
+    return (a * (sqrt(a*a + h4*h) - a)) / max(h4, 0.00001);
+}
+
+float IsoscelesTriangleNextAdjacent(float adjacentLength, float incircleRadius)
+{
+    /*
+    Subtract the diameter of the incircle
+    to get the adjacent side of the next level on the cone
+    */
+    return adjacentLength - (incircleRadius * 2.0);
+}
+
+vec4 ConeSampleWeightedColor(vec2 samplePos, float mipLevel)
+{
+    /* Sample color buffer with pre-integrated visibility */
+    vec3 color = textureLod(ColorBuffer, samplePos, mipLevel).rgb;
+    float visibility = textureLod(VisibilityBuffer, samplePos, mipLevel).r;
+    return vec4(color * visibility, visibility);
+}
+
 bool Hiztrace(vec3 origin, vec3 direction, float maxDistance, out vec3 intersection)
 {
     vec2 crossStep = vec2(direction.x >= 0 ? 1 : -1, direction.y >=0 ? 1 : -1);
@@ -106,6 +163,55 @@ bool Hiztrace(vec3 origin, vec3 direction, float maxDistance, out vec3 intersect
     bool intersected = (level < stopLevel);
     intersection = intersected ? rayPos : vec3(0.0);
     return intersected;
+}
+
+vec3 HizConeTrace(vec2 intersectPos, float roughness)
+{
+    float specularPower = RoughnessToSpecularPower(roughness);
+    float coneTheta = SpecularPowerToConeAngle(specularPower);
+    vec2 deltaPos = intersectPos - Texcoord.xy;
+
+    float adjacentLength = length(deltaPos);
+    vec2 adjacentUnit = normalize(deltaPos);
+
+    vec4 reflectionColor = vec4(0.0);
+
+    /* Append offset to adjacent length, so we have our first inner circle */
+    adjacentLength += IsoscelesTriangleOpposite(adjacentLength, coneTheta);
+    for (int i = 0; i < 7; i++)
+    {
+        /* Intersection length is the adjacent side, get the opposite side using trigonometry */
+        float oppositeLength = IsoscelesTriangleOpposite(adjacentLength, coneTheta);
+
+        /* Calculate in-radius of the isosceles triangle now */
+        float incircleSize = IsoscelesTriangleInRadius(oppositeLength, adjacentLength);
+
+        /* Get the sample position in screen space */
+        vec2 samplePos = Texcoord + adjacentUnit * (adjacentLength - incircleSize);
+
+        /*
+		Convert the in-radius into screen space and then check what power N
+		we have to raise 2 to reach it. That power N becomes our mip level to sample from.
+		*/
+        float mipLevel = log2(incircleSize * max(width, height));
+
+        /*
+		Read color and accumulate it using trilinear filtering (blending in xy and mip direction) and weight it.
+		Uses pre-convolved image, pre-integrated visibility buffer and Hi-Z buffer. It checks if cone sphere is below,
+		in between, or above the Hi-Z minimum and maximum and weights it together with transparency.
+		Visibility is accumulated in the alpha channel.
+		*/
+        reflectionColor += ConeSampleWeightedColor(samplePos, mipLevel);
+
+        if (reflectionColor.a > 1.0)
+            break;
+
+        /* Calculate next smaller triangle that approximates the cone in screen space */
+        adjacentLength = IsoscelesTriangleNextAdjacent(adjacentLength, incircleSize);
+    }
+//    /* Normalize reflection color (if visiblity is greater than 1.0 */
+//    reflectionColor /= reflectionColor.a;
+    return reflectionColor.xyz;
 }
 
 
@@ -169,8 +275,8 @@ void main()
 //    normal.xyz -= 1.0;
     vec3 viewNormal = vec3(vec4(normal.xyz, 0.0) * inverseView);
     //vec3 viewNormal = normal.xyz;
-    //vec4 color = vec4(texture(ColorBuffer, Texcoord).xyz, 1.0);
-    vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 color = vec4(texture(ColorBuffer, Texcoord).xyz, 1.0);
+    //vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
     //calculate position
     vec3 worldPos = texture(PositionBuffer, Texcoord).xyz;
 //    vec2 screenPos = Texcoord * 2.0 - 1.0;
@@ -200,12 +306,8 @@ void main()
     vec3 resultPos = vec3(0.0);
     if (Hiztrace(beginClipPos.xyz, reflectDirClip, maxDistance,resultPos))
     {
-        vec3 rayColor = texture(ColorBuffer, resultPos.xy).xyz;
-        color.xyz = rayColor.xyz;
+        vec3 rayColor = textureLod(ColorBuffer, resultPos.xy, 0.0).xyz;
+        color.xyz += rayColor.xyz;
     }
-
-
-    //vec3 rayColor = LinearTrace(beginClipPos.xyz, reflectDirClip, maxDistance);
-    //color.xyz += rayColor.xyz * 0.5;
     FragColor = color;
 }
