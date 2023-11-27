@@ -35,6 +35,7 @@ namespace SRenderer
         gbuffer_shader = Shader("../resource/shaders/svertex.vert", "../resource/shaders/gbuffer.frag");
         direct_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/direct.frag");
         hiz_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/hizbuffer.frag");
+        blur_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/blur.frag");
         ssr_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/hiztrace.frag");
         shadow_shader = Shader("../resource/shaders/lightDepth.vert", "../resource/shaders/lightDepth.frag");
         addModel("../resource/model/Sponza/glTF/Sponza.gltf");

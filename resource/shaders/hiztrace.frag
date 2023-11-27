@@ -278,11 +278,15 @@ void main()
     vec4 color = vec4(texture(ColorBuffer, Texcoord).xyz, 1.0);
     //vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
     //calculate position
-    vec3 worldPos = texture(PositionBuffer, Texcoord).xyz;
-//    vec2 screenPos = Texcoord * 2.0 - 1.0;
-//    float depth = texture(DepthBuffer, Texcoord).x;
-//    depth *= 2.0;
-//    depth -= 2.0;
+    //vec3 worldPos = texture(PositionBuffer, Texcoord).xyz;
+    vec2 screenPos = Texcoord * 2.0 - 1.0;
+    float depth = texture(DepthBuffer, Texcoord).x;
+    depth *= 2.0;
+    depth -= 1.0;
+    vec4 clipPos = vec4(screenPos, depth, 1.0);
+    vec4 viewPos = inverseProj * clipPos;
+    viewPos /= viewPos.w;
+    vec3 worldPos = (inverseView * viewPos).xyz;
     vec4 beginViewPos = view * vec4(worldPos, 1.0);
     vec4 beginClipPos = projection * beginViewPos;
     beginClipPos /= beginClipPos.w;
