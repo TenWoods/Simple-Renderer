@@ -259,11 +259,11 @@ namespace SRenderer
         //init hizPass
         glGenFramebuffers(1, &hizPass);
 
-        //init pre-convolution Pass
-        glGenFramebuffers(1, &pre_convolutionPass);
-        glGenTextures(1, &tempTex);
-        glBindTexture(GL_TEXTURE_2D, tempTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
+        //init visibility map
+        glGenFramebuffers(1, &pre_integrationPass);
+        glGenTextures(1, &visibilityMap);
+        glBindTexture(GL_TEXTURE_2D, visibilityMap);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, WIDTH, HEIGHT, 0, GL_RED, GL_FLOAT, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
@@ -271,16 +271,19 @@ namespace SRenderer
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levelsCount - 1);
         glGenerateMipmap(GL_TEXTURE_2D);
-        //init ssrPass
-//        glGenFramebuffers(1, &ssrPass);
-//        glBindFramebuffer(GL_FRAMEBUFFER, ssrPass);
-//        glGenTextures(1, &ssrResult);
-//        glBindTexture(GL_TEXTURE_2D, ssrResult);
-//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_INT, nullptr);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssrResult, 0);
-//        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+        //init pre-convolution Pass
+        glGenFramebuffers(1, &pre_convolutionPass);
+        glGenTextures(1, &tempTex);
+        glBindTexture(GL_TEXTURE_2D, tempTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levelsCount - 1);
+        glGenerateMipmap(GL_TEXTURE_2D);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glEnable(GL_DEPTH_TEST);
@@ -301,6 +304,8 @@ namespace SRenderer
             genHizbuffer();
 
             pre_convolution();
+
+            genVisibilityMap
 
             ssr();
 
@@ -447,6 +452,13 @@ namespace SRenderer
         glDepthMask(GL_TRUE);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    }
+
+    void SOpenGL::genVisibilityMap()
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, pre_integrationPass);
+        int lastWidth = WIDTH;
+        int lastHeight = HEIGHT;
     }
 
     void SOpenGL::ssr()

@@ -1,11 +1,9 @@
 #version 440 core
-
 out float DepthMipmap;
 
 in vec2 Texcoord;
 
 uniform sampler2D Depthmap;
-uniform sampler2D VisibilityMap;
 uniform ivec2 previousDim;
 uniform int previousLevel;
 
