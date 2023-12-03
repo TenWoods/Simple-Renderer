@@ -51,6 +51,7 @@ namespace SRenderer
         blur_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/blur.frag");
         ssr_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hiztrace.frag");
         shadow_shader = Shader("../../resource/shaders/lightDepth.vert", "../../resource/shaders/lightDepth.frag");
+        visibility_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/genVisibility.frag");
         addModel("../../resource/model/sponza/Sponza.gltf");
         addModel("../../resource/model/game/ABeautifulGame.gltf");
 //        addModel("../../resource/model/bottle/WaterBottle.gltf");
@@ -305,7 +306,7 @@ namespace SRenderer
 
             pre_convolution();
 
-            genVisibilityMap
+            genVisibilityMap();
 
             ssr();
 
@@ -390,11 +391,12 @@ namespace SRenderer
 
         hiz_shader.use();
         hiz_shader.setInt("Depthmap", 0);
-
+        hiz_shader.setInt("VisibilityMap", 1);
         // bind depth buffer
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, GBuffer[2]);
-
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, visibilityMap);
         for (int i = 1; i < levelsCount; i++)
         {
             //glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -406,6 +408,9 @@ namespace SRenderer
             lastWidth = lastWidth > 0 ? lastWidth : 1;
             lastHeight = lastHeight > 0 ? lastHeight : 1;
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, GBuffer[2], i);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, visibilityMap, i);
+            unsigned int attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+            glDrawBuffers(2, attachments);
             glBindVertexArray(quadVAO);
             glDrawArrays(GL_TRIANGLES, 0, 6);
             glBindVertexArray(0);
@@ -423,7 +428,6 @@ namespace SRenderer
 
         blur_shader.use();
         blur_shader.setInt("ColorBuffer", 0);
-
 
         for (int i = 1; i < levelsCount; i++)
         {
@@ -459,6 +463,9 @@ namespace SRenderer
         glBindFramebuffer(GL_FRAMEBUFFER, pre_integrationPass);
         int lastWidth = WIDTH;
         int lastHeight = HEIGHT;
+
+        visibility_shader.use();
+        visibility_shader.setInt("VisibilityMap", 0);
     }
 
     void SOpenGL::ssr()

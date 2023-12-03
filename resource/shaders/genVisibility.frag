@@ -8,3 +8,8 @@ uniform sampler2D DepthMap;
 uniform sampler2D VisibilityMap;
 uniform ivec2 previousDim;
 uniform int previousLevel;
+
+void main()
+{
+
+}

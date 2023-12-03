@@ -1,11 +1,21 @@
 #version 440 core
-out float DepthMipmap;
+layout (location = 0) out float DepthMipmap;
+layout (location = 1) out float VisibilityMipMap;
 
 in vec2 Texcoord;
 
 uniform sampler2D Depthmap;
+uniform sampler2D VisibilityMap;
 uniform ivec2 previousDim;
 uniform int previousLevel;
+
+const float nearPlane = 0.1f;
+const float farPlane = 1000.0f;
+
+float Linearize(float z)
+{
+    return (2.0 * nearPlane) / (farPlane + nearPlane - z * (farPlane - nearPlane));
+}
 
 void main()
 {
@@ -39,4 +49,5 @@ void main()
         minDepth = min(min(rowDepth.x, minDepth), rowDepth.y);
     }
     DepthMipmap = minDepth;
+    VisibilityMipMap = 1.0;
 }
