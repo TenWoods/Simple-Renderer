@@ -419,7 +419,6 @@ namespace SRenderer
         blur_shader.use();
         blur_shader.setInt("ColorBuffer", 0);
 
-
         for (int i = 1; i < levelsCount; i++)
         {
             // bind Color buffer
