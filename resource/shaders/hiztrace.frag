@@ -23,6 +23,11 @@ const int MAX_MIPMAP_LEVEL = 4;
 const float MIN_SPECULAR_POWER = 0.1;
 const float MAX_SPECULAR_POWER = 1024.0;
 
+#define FADE_BORDER_START		0.8
+#define FADE_BORDER_END			1.0
+#define FADE_MIRROR_FACTOR		10.0
+#define saturate(x) clamp(x, 0.0, 1.0)
+
 vec3 IntersectionDepthPlane(vec3 origin, vec3 direction, float t)
 {
     return origin + direction * t;
@@ -271,11 +276,13 @@ vec3 LinearTrace(vec3 origin, vec3 direction, float maxDistance)
 void main()
 {
     vec4 normal = texture(NormalBuffer, Texcoord);
+    float roughness = normal.w;
 //    normal.xyz *= 2.0;
 //    normal.xyz -= 1.0;
     vec3 viewNormal = vec3(vec4(normal.xyz, 0.0) * inverseView);
     //vec3 viewNormal = normal.xyz;
-    vec4 color = vec4(texture(ColorBuffer, Texcoord).xyz, 1.0);
+    vec4 color = texture(ColorBuffer, Texcoord);
+    color.w = 1.0;
     //vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
     //calculate position
     //vec3 worldPos = texture(PositionBuffer, Texcoord).xyz;
@@ -308,9 +315,16 @@ void main()
     maxDistance = min(maxDistance, reflectDirClip.z >= 0 ? (1 - beginClipPos.z)/reflectDirClip.z : -beginClipPos.z/reflectDirClip.z);
 
     vec3 resultPos = vec3(0.0);
-    if (Hiztrace(beginClipPos.xyz, reflectDirClip, maxDistance,resultPos))
+    if (Hiztrace(beginClipPos.xyz, reflectDirClip, maxDistance, resultPos))
     {
-        vec3 rayColor = textureLod(ColorBuffer, resultPos.xy, 0.0).xyz;
+        //vec3 rayColor = textureLod(ColorBuffer, resultPos.xy, 0.0).xyz;
+        vec3 rayColor = HizConeTrace(resultPos.xy, roughness);
+//        float boundary = distance(resultPos.xy, vec2(0.5)) * 2.0;
+//        float fadeOnBorder = 1.0 - saturate((boundary - FADE_BORDER_START) / (FADE_BORDER_END - FADE_BORDER_START));
+//
+//        /* Compute fading on mirror (rays towards the camera) */
+//        float fadeOnMirror = saturate(reflectDir.z * FADE_MIRROR_FACTOR);
+//        rayColor.rgb *= (fadeOnBorder * fadeOnMirror);
         color.xyz += rayColor.xyz;
     }
     FragColor = color;

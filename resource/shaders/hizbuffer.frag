@@ -19,6 +19,12 @@ float Linearize(float z)
 
 void main()
 {
+    if (previousLevel == -1)
+    {
+        DepthMipmap = texelFetch(Depthmap, ivec2(gl_FragCoord), 0).r;
+        VisibilityMipMap = 1.0;
+        return;
+    }
     ivec2 thisLevelTexelCoord = ivec2(gl_FragCoord);
     ivec2 previousTexcoord = 2 * thisLevelTexelCoord;
     vec4 sampledDepth;
@@ -50,17 +56,11 @@ void main()
         minDepth = min(min(rowDepth.x, minDepth), rowDepth.y);
     }
     vec4 visibility;
-    if (previousLevel == 0)
-    {
-        visibility = vec4(1.0);
-    }
-    else
-    {
-        visibility.x = texelFetch(VisibilityMap, previousTexcoord, previousLevel).r;
-        visibility.y = texelFetch(VisibilityMap, previousTexcoord + ivec2(1, 0), previousLevel).r;
-        visibility.z = texelFetch(VisibilityMap, previousTexcoord + ivec2(0, 1), previousLevel).r;
-        visibility.w = texelFetch(VisibilityMap, previousTexcoord + ivec2(1, 1), previousLevel).r;
-    }
+    visibility.x = texelFetch(VisibilityMap, previousTexcoord, previousLevel).r;
+    visibility.y = texelFetch(VisibilityMap, previousTexcoord + ivec2(1, 0), previousLevel).r;
+    visibility.z = texelFetch(VisibilityMap, previousTexcoord + ivec2(0, 1), previousLevel).r;
+    visibility.w = texelFetch(VisibilityMap, previousTexcoord + ivec2(1, 1), previousLevel).r;
+
     sampledDepth.x = Linearize(sampledDepth.x);
     sampledDepth.y = Linearize(sampledDepth.y);
     sampledDepth.z = Linearize(sampledDepth.z);

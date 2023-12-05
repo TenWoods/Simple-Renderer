@@ -306,8 +306,6 @@ namespace SRenderer
 
             pre_convolution();
 
-            genVisibilityMap();
-
             ssr();
 
             //postRendering();
@@ -397,6 +395,13 @@ namespace SRenderer
         glBindTexture(GL_TEXTURE_2D, GBuffer[2]);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, visibilityMap);
+        unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+        hiz_shader.setInt("previousLevel", -1);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, GBuffer[2], 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, visibilityMap, 0);
+        glDrawBuffers(2, attachments);
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
         for (int i = 1; i < levelsCount; i++)
         {
             //glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -409,12 +414,12 @@ namespace SRenderer
             lastHeight = lastHeight > 0 ? lastHeight : 1;
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, GBuffer[2], i);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, visibilityMap, i);
-            unsigned int attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
             glDrawBuffers(2, attachments);
             glBindVertexArray(quadVAO);
             glDrawArrays(GL_TRIANGLES, 0, 6);
-            glBindVertexArray(0);
+
         }
+        glBindVertexArray(0);
         glDepthMask(GL_TRUE);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
@@ -478,6 +483,7 @@ namespace SRenderer
         ssr_shader.setInt("NormalBuffer", 1);
         ssr_shader.setInt("DepthBuffer", 2);
         ssr_shader.setInt("PositionBuffer", 3);
+        ssr_shader.setInt("VisibilityBuffer", 4);
         ssr_shader.setMat4("inverseProj", mainCamera.get_invProjection(WIDTH, HEIGHT));
         ssr_shader.setMat4("inverseView", mainCamera.get_invView());
         ssr_shader.setMat4("view", mainCamera.get_ViewMatrix());
@@ -491,6 +497,8 @@ namespace SRenderer
         glBindTexture(GL_TEXTURE_2D, GBuffer[2]);
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, worldPosition);
+        glActiveTexture(GL_TEXTURE4);
+        glBindTexture(GL_TEXTURE_2D, visibilityMap);
 //        glActiveTexture(GL_TEXTURE0 + 3);
 //        glBindTexture(GL_TEXTURE_2D, shadowMap);
         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
