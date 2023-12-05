@@ -22,6 +22,7 @@ namespace SRenderer
         Shader hiz_shader;
         Shader blur_shader;
         Shader shadow_shader;
+        Shader visibility_shader;
         Camera mainCamera;
         Camera lightCamera;
         glm::mat4 lightSpaceMatrix;
@@ -36,14 +37,15 @@ namespace SRenderer
         unsigned int shadowMapPass;
         unsigned int directPass;
         unsigned int hizPass;
-        unsigned int ssrPass;
         unsigned int pre_convolutionPass;
+        unsigned int pre_integrationPass;
         unsigned int shadowPass;
 
         unsigned int shadowMap;
         unsigned int shadow;
         unsigned int directResult, viewPosition;
         unsigned int tempTex;
+        unsigned int visibilityMap;
         unsigned int ssrResult;
         unsigned int quadVAO, quadVBO;
         unsigned int GBuffer[3];
@@ -62,6 +64,7 @@ namespace SRenderer
         void genGbuffer();
         void directLighting();
         void genHizbuffer();
+        void genVisibilityMap();
         void ssr();
         void pre_convolution();
         void postRendering();

@@ -51,6 +51,7 @@ namespace SRenderer
         blur_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/blur.frag");
         ssr_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hiztrace.frag");
         shadow_shader = Shader("../../resource/shaders/lightDepth.vert", "../../resource/shaders/lightDepth.frag");
+        visibility_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/genVisibility.frag");
         addModel("../../resource/model/sponza/Sponza.gltf");
         addModel("../../resource/model/game/ABeautifulGame.gltf");
 //        addModel("../../resource/model/bottle/WaterBottle.gltf");
@@ -259,11 +260,11 @@ namespace SRenderer
         //init hizPass
         glGenFramebuffers(1, &hizPass);
 
-        //init pre-convolution Pass
-        glGenFramebuffers(1, &pre_convolutionPass);
-        glGenTextures(1, &tempTex);
-        glBindTexture(GL_TEXTURE_2D, tempTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
+        //init visibility map
+        glGenFramebuffers(1, &pre_integrationPass);
+        glGenTextures(1, &visibilityMap);
+        glBindTexture(GL_TEXTURE_2D, visibilityMap);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, WIDTH, HEIGHT, 0, GL_RED, GL_FLOAT, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
@@ -271,16 +272,19 @@ namespace SRenderer
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levelsCount - 1);
         glGenerateMipmap(GL_TEXTURE_2D);
-        //init ssrPass
-//        glGenFramebuffers(1, &ssrPass);
-//        glBindFramebuffer(GL_FRAMEBUFFER, ssrPass);
-//        glGenTextures(1, &ssrResult);
-//        glBindTexture(GL_TEXTURE_2D, ssrResult);
-//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_INT, nullptr);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssrResult, 0);
-//        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+        //init pre-convolution Pass
+        glGenFramebuffers(1, &pre_convolutionPass);
+        glGenTextures(1, &tempTex);
+        glBindTexture(GL_TEXTURE_2D, tempTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levelsCount - 1);
+        glGenerateMipmap(GL_TEXTURE_2D);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glEnable(GL_DEPTH_TEST);
@@ -301,6 +305,8 @@ namespace SRenderer
             genHizbuffer();
 
             pre_convolution();
+
+            genVisibilityMap();
 
             ssr();
 
@@ -385,11 +391,12 @@ namespace SRenderer
 
         hiz_shader.use();
         hiz_shader.setInt("Depthmap", 0);
-
+        hiz_shader.setInt("VisibilityMap", 1);
         // bind depth buffer
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, GBuffer[2]);
-
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, visibilityMap);
         for (int i = 1; i < levelsCount; i++)
         {
             //glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -401,6 +408,9 @@ namespace SRenderer
             lastWidth = lastWidth > 0 ? lastWidth : 1;
             lastHeight = lastHeight > 0 ? lastHeight : 1;
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, GBuffer[2], i);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, visibilityMap, i);
+            unsigned int attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+            glDrawBuffers(2, attachments);
             glBindVertexArray(quadVAO);
             glDrawArrays(GL_TRIANGLES, 0, 6);
             glBindVertexArray(0);
@@ -446,6 +456,16 @@ namespace SRenderer
         glDepthMask(GL_TRUE);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    }
+
+    void SOpenGL::genVisibilityMap()
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, pre_integrationPass);
+        int lastWidth = WIDTH;
+        int lastHeight = HEIGHT;
+
+        visibility_shader.use();
+        visibility_shader.setInt("VisibilityMap", 0);
     }
 
     void SOpenGL::ssr()
