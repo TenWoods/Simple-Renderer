@@ -31,13 +31,13 @@ void main()
     else
     {
         color = texelFetch(ColorBuffer, thisLevelTexelCoord, previousLevel+1).xyz;
-        color += texelFetch(ColorBuffer, thisLevelTexelCoord + ivec2(3, 0), previousLevel+1).xyz * WEIGHT_0;
-        color += texelFetch(ColorBuffer, thisLevelTexelCoord + ivec2(2, 0), previousLevel+1).xyz * WEIGHT_1;
-        color += texelFetch(ColorBuffer, thisLevelTexelCoord + ivec2(1, 0), previousLevel+1).xyz * WEIGHT_2;
-        color += texelFetch(ColorBuffer, thisLevelTexelCoord + ivec2(0, 0), previousLevel+1).xyz * WEIGHT_3;
-        color += texelFetch(ColorBuffer, thisLevelTexelCoord + ivec2(-1, 0), previousLevel+1).xyz * WEIGHT_2;
-        color += texelFetch(ColorBuffer, thisLevelTexelCoord + ivec2(-2, 0), previousLevel+1).xyz * WEIGHT_1;
-        color += texelFetch(ColorBuffer, thisLevelTexelCoord + ivec2(-3, 0), previousLevel+1).xyz * WEIGHT_0;
+//        color += texelFetch(ColorBuffer, thisLevelTexelCoord + ivec2(3, 0), previousLevel+1).xyz * WEIGHT_0;
+//        color += texelFetch(ColorBuffer, thisLevelTexelCoord + ivec2(2, 0), previousLevel+1).xyz * WEIGHT_1;
+//        color += texelFetch(ColorBuffer, thisLevelTexelCoord + ivec2(1, 0), previousLevel+1).xyz * WEIGHT_2;
+//        color += texelFetch(ColorBuffer, thisLevelTexelCoord + ivec2(0, 0), previousLevel+1).xyz * WEIGHT_3;
+//        color += texelFetch(ColorBuffer, thisLevelTexelCoord + ivec2(-1, 0), previousLevel+1).xyz * WEIGHT_2;
+//        color += texelFetch(ColorBuffer, thisLevelTexelCoord + ivec2(-2, 0), previousLevel+1).xyz * WEIGHT_1;
+//        color += texelFetch(ColorBuffer, thisLevelTexelCoord + ivec2(-3, 0), previousLevel+1).xyz * WEIGHT_0;
     }
     FragColor = vec4(color, 1.0);
 }
