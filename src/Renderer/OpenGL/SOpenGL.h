@@ -21,7 +21,8 @@ namespace SRenderer
         Shader ssr_shader;
         Shader hiz_shader;
         Shader blur_shader;
-        Shader shadow_shader;
+        Shader shadowMap_shader;
+        //Shader shadow_shader;
         Shader visibility_shader;
         Camera mainCamera;
         Camera lightCamera;
@@ -46,7 +47,6 @@ namespace SRenderer
         unsigned int directResult, viewPosition;
         unsigned int tempTex;
         unsigned int visibilityMap;
-        unsigned int ssrResult;
         unsigned int quadVAO, quadVBO;
         unsigned int GBuffer[3];
         unsigned int worldPosition;
@@ -64,10 +64,9 @@ namespace SRenderer
         void genGbuffer();
         void directLighting();
         void genHizbuffer();
-        void genVisibilityMap();
         void ssr();
         void pre_convolution();
-        void postRendering();
+        //void genShadow();
     private:
         static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     public:
