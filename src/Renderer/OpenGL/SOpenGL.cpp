@@ -46,10 +46,10 @@ namespace SRenderer
         shadowMap_shader = Shader("../resource/shaders/lightDepth.vert", "../resource/shaders/lightDepth.frag");
         //shadow_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/PCSS.frag");
         addModel("../resource/model/Sponza/glTF/Sponza.gltf");
-        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
-//        addModel("../resource/model/AGAME/ABeautifulGame.gltf");
-        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
-        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
+//        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
+        addModel("../resource/model/AGAME/ABeautifulGame.gltf");
+//        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
+//        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 #elif _WIN64
@@ -75,10 +75,10 @@ namespace SRenderer
         scene_root[0]->set_position(glm::vec3(0.0f, 0.0f, 0.0f));
         scene_root[1]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
         scene_root[1]->set_position(glm::vec3(0.0f, 6.0f, 0.0f));
-        scene_root[2]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
-        scene_root[2]->set_position(glm::vec3(15.0f, 6.0f, 0.0f));
-        scene_root[3]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
-        scene_root[3]->set_position(glm::vec3(-15.0f, 6.0f, 0.0f));
+//        scene_root[2]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
+//        scene_root[2]->set_position(glm::vec3(15.0f, 6.0f, 0.0f));
+//        scene_root[3]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
+//        scene_root[3]->set_position(glm::vec3(-15.0f, 6.0f, 0.0f));
 //        scene_root[4]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
 //        scene_root[4]->set_position(glm::vec3(0.0f, 6.0f, 10.0f));
 //        scene_root[5]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
@@ -264,7 +264,6 @@ namespace SRenderer
         glGenFramebuffers(1, &hizPass);
 
         //init visibility map
-        glGenFramebuffers(1, &pre_integrationPass);
         glGenTextures(1, &visibilityMap);
         glBindTexture(GL_TEXTURE_2D, visibilityMap);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, WIDTH, HEIGHT, 0, GL_RED, GL_FLOAT, nullptr);
@@ -333,7 +332,7 @@ namespace SRenderer
     void SOpenGL::genGbuffer()
     {
         glBindFramebuffer(GL_FRAMEBUFFER, gbufferPass);
-        glClearColor(1.0, 1.0, 1.0, 1.0);
+        glClearColor(0.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         gbuffer_shader.use();
         glm::mat4 projection = mainCamera.get_Projection(WIDTH, HEIGHT, false);
@@ -343,11 +342,13 @@ namespace SRenderer
         set_light();
         //gbuffer_shader.setMat4("model", glm::mat4(1.0f));
         //scene_root[1]->draw(gbuffer_shader);
-        for (auto& object : scene_root)
-        {
-            //std::cout << "Draw" << std::endl;
-            object->draw(gbuffer_shader);
-        }
+//        for (auto& object : scene_root)
+//        {
+//            //std::cout << "Draw" << std::endl;
+//            object->draw(gbuffer_shader);
+//        }
+        scene_root[0]->draw(gbuffer_shader);
+        scene_root[1]->draw(gbuffer_shader);
 
         // draw shadow map
         glBindFramebuffer(GL_FRAMEBUFFER, shadowMapPass);
@@ -358,11 +359,13 @@ namespace SRenderer
         view = lightCamera.get_ViewMatrix();
         lightSpaceMatrix = projection * view;
         shadowMap_shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        for (auto& object : scene_root)
-        {
-            //std::cout << "Draw" << std::endl;
-            object->draw(shadowMap_shader);
-        }
+//        for (auto& object : scene_root)
+//        {
+//            //std::cout << "Draw" << std::endl;
+//            object->draw(shadowMap_shader);
+//        }
+        scene_root[0]->draw(shadowMap_shader);
+        scene_root[1]->draw(shadowMap_shader);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 

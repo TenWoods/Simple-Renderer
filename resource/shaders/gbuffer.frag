@@ -39,6 +39,14 @@ vec3 getNormalFromMap()
     return normal;
 }
 
+const float nearPlane = 0.1f;
+const float farPlane = 1000.0f;
+
+float Linearize(float z)
+{
+    return (2.0 * nearPlane) / (farPlane + nearPlane - z * (farPlane - nearPlane));
+}
+
 void main()
 {
     vec3 baseColor = texture(BaseColorMap, fs_in.Texcoord).xyz;

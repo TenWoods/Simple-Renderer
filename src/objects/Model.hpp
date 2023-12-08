@@ -33,12 +33,34 @@ namespace SRenderer
             glm::mat4 model(1.0f);
             model = glm::translate(model, position);
             model = glm::scale(model, scale);
+            //std::cout<< meshes.size() << std::endl;
             for (const auto& mesh : meshes)
             {
                 glm::mat4 temp = glm::translate(model, mesh.position);
                 shader.setMat4("model", temp);
                 mesh.draw(shader);
             }
+            //std::cout << std::endl << std::endl;
+        }
+
+        void draw(const Shader& shader, int num) override
+        {
+            //std::cout << "Draw!" << std::endl;
+            //TODO: set position, rotation and scale
+            shader.use();
+            glm::mat4 model(1.0f);
+            model = glm::translate(model, position);
+            model = glm::scale(model, scale);
+            //std::cout<< meshes.size() << std::endl;
+//            for (int i = 3*num; i < meshes.size(); i++)
+//            {
+//                glm::mat4 temp = glm::translate(model, meshes[i].position);
+//                shader.setMat4("model", temp);
+//                meshes[i].draw(shader);
+//            }
+            glm::mat4 temp = glm::translate(model, meshes[2].position);
+            shader.setMat4("model", temp);
+            meshes[2].draw(shader);
             //std::cout << std::endl << std::endl;
         }
 

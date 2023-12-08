@@ -39,7 +39,6 @@ namespace SRenderer
         unsigned int directPass;
         unsigned int hizPass;
         unsigned int pre_convolutionPass;
-        unsigned int pre_integrationPass;
         unsigned int shadowPass;
 
         unsigned int shadowMap;
