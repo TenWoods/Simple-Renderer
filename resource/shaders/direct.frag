@@ -106,8 +106,8 @@ void main()
     vec4 clipPos = vec4(screenPos, depth, 1.0);
     vec4 viewPos = inverseProj * clipPos;
     viewPos /= viewPos.w;
-    //vec3 worldPos = (inverseView * viewPos).xyz;
-    vec3 worldPos = texture(PositionMap, Texcoord).xyz;
+    vec3 worldPos = (inverseView * viewPos).xyz;
+    //vec3 worldPos = texture(PositionMap, Texcoord).xyz;
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, baseColor.xyz, metallic);
     //vec3 viewNormal = vec3(vec4(normal.xyz, 0.0) * inverseView);
