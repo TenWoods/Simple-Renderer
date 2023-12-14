@@ -11,20 +11,19 @@ uniform float m_Edge;
 uniform float m_Texw;
 uniform float m_Texh;
 
-varying vert {
-    vec2 texcoord;
-}Vert;
+in vec2 texcoord;
 
 float normaldist(float sigma, float x){
     return exp(-x * x / (2 * sigma * sigma));
 }
 
-void main(){
+void main()
+{
     vec3 blur;
     float kernelNormal_left, kernelNormal_right, kernel_sum;
     vec4 shadowdep_left, shadowdep_right;
 
-    vec2 position = Vert.texcoord;
+    vec2 position = texcoord;
     vec4 origin = texture(m_SSABSSBlur11, position);
     float w_p = origin.y * 20;
 

@@ -44,6 +44,10 @@ namespace SRenderer
         blur_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/blur.frag");
         ssr_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/hiztrace.frag");
         shadowMap_shader = Shader("../resource/shaders/lightDepth.vert", "../resource/shaders/lightDepth.frag");
+        blur1_shader = Shader("../resource/shaders/SSABSS/blur1.vert", "../resource/shaders/SSABSS/blur1.frag");
+        blur1_shader = Shader("../resource/shaders/SSABSS/blur2.vert", "../resource/shaders/SSABSS/blur2.frag");
+        blur1_shader = Shader("../resource/shaders/SSABSS/blur3.vert", "../resource/shaders/SSABSS/blur3.frag");
+        preCal_shader = Shader("../resource/shaders/SSABSS/PreCalculation.vert", "../resource/shaders/SSABSS/PreCalculation.frag");
         //shadow_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/PCSS.frag");
         addModel("../resource/model/Sponza/glTF/Sponza.gltf");
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
@@ -68,6 +72,19 @@ namespace SRenderer
 //        addModel("../../resource/model/bottle/WaterBottle.gltf");
 
 #endif
+        preCal_shader.use();
+        preCal_shader.setInt("m_SSABSSshadowMap", 0);
+        blur1_shader.use();
+        blur1_shader.setInt("m_SSABSSPreCal1", 0);
+        blur1_shader.setInt("m_SSABSSPreCal2", 1);
+        blur2_shader.use();
+        blur2_shader.setInt("m_SSABSSBlur11", 0);
+        blur2_shader.setInt("m_SSABSSBlur12", 1);
+        blur2_shader.setInt("m_SSABSSPreCal2", 2);
+        blur3_shader.use();
+        blur3_shader.setInt("m_SSABSSBlur21", 0);
+        blur3_shader.setInt("m_SSABSSBlur22", 1);
+        blur3_shader.setInt("m_SSABSSPreCal2", 2);
         lightCamera.set_Zoom(90.0f);
         //ssr_shader.use();
         //hiz_shader.use();
@@ -182,13 +199,12 @@ namespace SRenderer
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, GBuffer[0], 0);
         //Normal buffer
         glBindTexture(GL_TEXTURE_2D, GBuffer[1]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+1, GL_TEXTURE_2D, GBuffer[1], 0);
+
         //Generate Depth buffer
         levelsCount = 7;
         glBindTexture(GL_TEXTURE_2D, GBuffer[2]);
@@ -200,12 +216,15 @@ namespace SRenderer
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levelsCount - 1);
         glGenerateMipmap(GL_TEXTURE_2D);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, GBuffer[2], 0);
+
         //View Position Buffer
         glBindTexture(GL_TEXTURE_2D, worldPosition);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, GBuffer[0], 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, GBuffer[1], 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, GBuffer[2], 0);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, worldPosition, 0);
 
         unsigned int attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
@@ -299,6 +318,38 @@ namespace SRenderer
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, shadow, 0);
         glDrawBuffers(1, attachments);
 
+        glGenFramebuffers(1, &blur1Pass);
+        glBindFramebuffer(GL_FRAMEBUFFER, blur1Pass);
+        genTexture(&SSABSS_Blur1_1);
+        genTexture(&SSABSS_Blur1_2);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, SSABSS_Blur1_1, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, SSABSS_Blur1_1, 0);
+        glDrawBuffers(2, attachments);
+
+        glGenFramebuffers(1, &blur2Pass);
+        glBindFramebuffer(GL_FRAMEBUFFER, blur2Pass);
+        genTexture(&SSABSS_Blur2_1);
+        genTexture(&SSABSS_Blur2_2);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, SSABSS_Blur2_1, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, SSABSS_Blur2_2, 0);
+        glDrawBuffers(2, attachments);
+
+        glGenFramebuffers(1, &blur3Pass);
+        glBindFramebuffer(GL_FRAMEBUFFER, blur3Pass);
+        genTexture(&SSABSS_Blur3_1);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, SSABSS_Blur3_1, 0);
+        glDrawBuffers(1, attachments);
+
+        glGenFramebuffers(1, &preCalPass);
+        glBindFramebuffer(GL_FRAMEBUFFER, preCalPass);
+        genTexture(&SSABSS_PreCal_1);
+        genTexture(&SSABSS_PreCal_2);
+        genTexture(&SSABSS_PreCal_3);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, SSABSS_PreCal_1, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, SSABSS_PreCal_2, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, SSABSS_PreCal_3, 0);
+        glDrawBuffers(3, attachments);
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
@@ -321,12 +372,19 @@ namespace SRenderer
 
             ssr();
 
-            //postRendering();
-
             glfwSwapBuffers(window);
             glfwPollEvents();
 //            std::cout << deltaTime << std::endl;
         }
+    }
+
+    void SOpenGL::genTexture(unsigned int *textureID)
+    {
+        glGenTextures(1, textureID);
+        glBindTexture(GL_TEXTURE_2D, *textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
 
     void SOpenGL::genGbuffer()
@@ -478,6 +536,12 @@ namespace SRenderer
         glDepthMask(GL_TRUE);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    }
+
+    void SOpenGL::calculateShadow()
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, preCalPass);
+        preCal_shader.use();
     }
 
     void SOpenGL::ssr()

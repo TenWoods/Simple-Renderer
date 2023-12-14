@@ -10,10 +10,7 @@ uniform float m_Edge;
 uniform float m_Texw;
 uniform float m_Texh;
 
-varying vert
-{
-    vec2 texcoord;
-}Vert;
+in vec2 texcoord;
 
 float normaldist(float sigma, float x)
 {
@@ -26,7 +23,7 @@ void main()
     float kernelNormal_left, kernelNormal_right, kernel_sum;
     vec2 shadowdep_left, shadowdep_right;
 
-    vec2 position = vec2(Vert.texcoord);
+    vec2 position = vec2(texcoord);
     vec4 origin = texture(m_SSABSSPreCal1, position);
     float w_p = origin.y * 20;
     float width_c = origin.z;

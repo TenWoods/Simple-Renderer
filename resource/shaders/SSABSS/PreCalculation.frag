@@ -15,7 +15,10 @@ uniform vec3 m_LightDir;
 
 uniform float m_LightSize;
 
-varying vec4 worldPos;
+uniform mat4 inverseView;
+uniform mat4 view;
+uniform mat4 projection;
+
 // #endif
 
 const mat4 biasMat = mat4(0.5, 0.0, 0.0, 0.0,
@@ -38,25 +41,31 @@ vec2(0.865413, 0.763726), vec2(0.872005, -0.927));
 
 
 uniform sampler2D m_SSABSSshadowMap;
+uniform sampler2D NormalMap;
+uniform sampler2D PositionMap;
 
 varying prim
 {
     vec3 Normal;
     vec3 NormView;
-    vec4 Position;
+    vec4 Position; //screen space position
     vec4 MVvertex;
-    vec4 WorldViewPosition;
+    vec4 WorldViewPosition; //world space position
 }Prim;
 
 void main()
 {
+    vec3 normal = texture(NormalMap, texture);
+    vec4 worldPosition = texture(PositionMap, texture);
+    vec3 viewNormal = vec3(vec4(normal, 0.0) * inverseView);
+
     vec4 L = vec4(-m_LightPos, 1);
 
-    vec4 posView = Prim.WorldViewPosition;
-    vec4 posLight = m_LightViewMatrix0 * Prim.MVvertex;
+    vec4 posView = view * worldPosition;
+    vec4 posLight = m_LightViewMatrix0 * worldPosition;
 
     float depLight = -posLight.z;
-    posLight = m_LightViewProjectionMatrix0 * Prim.MVvertex;
+    posLight = m_LightViewProjectionMatrix0 * worldPosition;
     vec3 projCoord = (posLight.xyz / posLight.w) * 0.5 + vec3(0.5);
 
     float zAtShadowMap = texture(m_SSABSSshadowMap, projCoord.xy).x;
@@ -75,10 +84,12 @@ void main()
     // light size = 13
     float range = m_LightSize * 10 * projCoord.z;
     // Possion Sampling 32
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 32; i++)
+    {
         vec2 zAtShadowMap_tmp = texture(m_SSABSSshadowMap, projCoord.xy + 0.001 * range * Possion32[i]).xy;
         // zAtShadowMap_tmp = texture(m_SSABSSshadowMap, projCoord.xy).xy; // ?????????
-        if (zAtShadowMap_tmp.x < zFromLight - 0.0015) {
+        if (zAtShadowMap_tmp.x < zFromLight - 0.0015)
+        {
             blocker += zAtShadowMap_tmp.y;
             count++;
         }
@@ -98,9 +109,9 @@ void main()
     float px = posView.x/posView.w;
     float py = posView.y/posView.w;
     float pz = posView.z/posView.w;
-    float nx = Prim.NormView.x;
-    float ny = Prim.NormView.y;
-    float nz = Prim.NormView.z;
+    float nx = viewNormal.x;
+    float ny = viewNormal.y;
+    float nz = viewNormal.z;
 
     float F = (nx * px + ny * py) * (nx * px + ny * py) + nz * nz * (px * px + py * py - w_p * w_p);
     float E = -2 * (nx * nz * px * py + nx * ny * px * pz - ny * nz * px * px + (nz * nz + ny * ny) * py * pz + ny * nz * w_p * w_p);
@@ -109,10 +120,12 @@ void main()
     float B = ((nx * nx + ny * ny) * px * px + (ny * ny + nz * nz) * pz * pz + 2 * nx * nz * px * pz - ny * ny * w_p * w_p);
     float A = ((nx * nx + ny * ny) * py * py + (nx * nx + nz * nz) * pz * pz + 2 * ny * nz * py * pz - nx * nx * w_p * w_p);
 
-    if (abs(B - A) < 0.00001) {
+    if (abs(B - A) < 0.00001)
+    {
         theta = 0.0;
     }
-    else {
+    else
+    {
         theta = (1 / 2.0 * atan(C / (B - A)));
     }
     float Ad = A * cos(theta) * cos(theta) + B * sin(theta) * sin(theta) - C * sin(theta) * cos(theta);
@@ -134,5 +147,5 @@ void main()
     // out_1 = vec4(Prim.Position.z, 0, 0, 1);
     out_1 = vec4(shadow, r1 * 0.5, r2 / r1, abs(Prim.Position.z / 100));
     out_2 = vec4(axis1, axis2);
-    out_3 = vec4(1, 1, 1, max(0, dot(Prim.Normal, Lvec)));
+    out_3 = vec4(1, 1, 1, max(0, dot(normal, Lvec)));
 }

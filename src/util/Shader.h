@@ -25,7 +25,7 @@ namespace SRenderer
         void setMat3(const std::string& name, glm::mat3 value) const;
         void setMat4(const std::string& name, glm::mat4 value) const;
     private:
-        void checkCompileError(GLint shaderID, const std::string& type);
+        void checkCompileError(GLint shaderID, const std::string& type, const std::string& path);
     };
 }
 #endif //SIMPLE_RENDERER_SHADER_H

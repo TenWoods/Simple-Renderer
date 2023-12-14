@@ -22,7 +22,11 @@ namespace SRenderer
         Shader hiz_shader;
         Shader blur_shader;
         Shader shadowMap_shader;
-        //Shader shadow_shader;
+        Shader blur1_shader;
+        Shader blur2_shader;
+        Shader blur3_shader;
+        Shader preCal_shader;
+        Shader shadow_shader;
         Shader visibility_shader;
         Camera mainCamera;
         Camera lightCamera;
@@ -33,14 +37,18 @@ namespace SRenderer
         float lastX;
         float lastY;
         bool firstMouse;
-
+        //FBO
         unsigned int gbufferPass;
         unsigned int shadowMapPass;
         unsigned int directPass;
         unsigned int hizPass;
         unsigned int pre_convolutionPass;
         unsigned int shadowPass;
-
+        unsigned int blur1Pass;
+        unsigned int blur2Pass;
+        unsigned int blur3Pass;
+        unsigned int preCalPass;
+        //Textures
         unsigned int shadowMap;
         unsigned int shadow;
         unsigned int directResult, viewPosition;
@@ -49,6 +57,8 @@ namespace SRenderer
         unsigned int quadVAO, quadVBO;
         unsigned int GBuffer[3];
         unsigned int worldPosition;
+        unsigned int SSABSS_Blur1_1, SSABSS_Blur1_2, SSABSS_Blur2_1, SSABSS_Blur2_2, SSABSS_Blur3_1;
+        unsigned int SSABSS_PreCal_1, SSABSS_PreCal_2, SSABSS_PreCal_3;
         int levelsCount;
     private:
         void initWindow();
@@ -60,9 +70,12 @@ namespace SRenderer
         void forwardRendering();
         void deferredRendering();
 
+        void genTexture(unsigned int *textureID);
+
         void genGbuffer();
         void directLighting();
         void genHizbuffer();
+        void calculateShadow();
         void ssr();
         void pre_convolution();
         //void genShadow();

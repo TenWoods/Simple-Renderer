@@ -36,18 +36,18 @@ namespace SRenderer
         vertex = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertex, 1, &vShaderCode, nullptr);
         glCompileShader(vertex);
-        checkCompileError(vertex, "VERTEX");
+        checkCompileError(vertex, "VERTEX", vertexPath);
 
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragment, 1, &fShaderCode, nullptr);
         glCompileShader(fragment);
-        checkCompileError(fragment, "FRAGMENT");
+        checkCompileError(fragment, "FRAGMENT", vertexPath);
 
         id = glCreateProgram();
         glAttachShader(id, vertex);
         glAttachShader(id, fragment);
         glLinkProgram(id);
-        checkCompileError(id, "PROGRAM");
+        checkCompileError(id, "PROGRAM", vertexPath);
 
         glDeleteShader(vertex);
         glDeleteShader(fragment);
@@ -108,7 +108,7 @@ namespace SRenderer
         glUniformMatrix4fv(glGetUniformLocation(id, name.c_str()), 1, GL_FALSE, &value[0][0]);
     }
 
-    void Shader::checkCompileError(GLint shaderID, const std::string& type)
+    void Shader::checkCompileError(GLint shaderID, const std::string& type, const std::string& path)
     {
         GLint success;
         GLchar infoLog[1024];
@@ -118,6 +118,7 @@ namespace SRenderer
             if (!success)
             {
                 glGetShaderInfoLog(shaderID, 1024, nullptr, infoLog);
+                std::cerr << path << std::endl;
                 std::cerr << "[Shader] Compile Error of type: " << type << std::endl << infoLog << std::endl;
             }
         }
@@ -127,6 +128,7 @@ namespace SRenderer
             if (!success)
             {
                 glGetProgramInfoLog(shaderID, 1024, nullptr, infoLog);
+                std::cerr << path << std::endl;
                 std::cerr << "[Shader] Link Error of type: " << type << std::endl << infoLog << std::endl;
             }
         }
