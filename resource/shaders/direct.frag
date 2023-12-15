@@ -16,6 +16,7 @@ uniform sampler2D BaseColorMap;
 uniform sampler2D NormalMap;
 uniform sampler2D DepthMap;
 uniform sampler2D PositionMap;
+uniform sampler2D ShadowResult;
 
 const float PI = 3.14159265359;
 const float near = 0.1;
@@ -115,6 +116,9 @@ void main()
     //vec4 viewLightPos = view * vec4(lightPos, 1.0);
     vec3 lightDir = lightPos.xyz - worldPos.xyz;
     vec3 result = CalculateLighting(baseColor.xyz, F0, cameraDir, lightDir, normal.xyz, metallic, roughness);
+    vec3 shadows = texture(ShadowResult, Texcoord).xyz;
+    float shadow_f = shadows.y;
+    result.xyz = result.xyz * (shadow_f * 0.7  + 0.3);
     DirectColor = vec4(result, 1.0);
     ViewPosition = vec4(viewPos.xyz, 1.0);
 }

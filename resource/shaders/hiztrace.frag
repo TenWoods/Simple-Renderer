@@ -8,7 +8,7 @@ uniform sampler2D NormalBuffer;
 uniform sampler2D DepthBuffer;
 uniform sampler2D PositionBuffer;
 uniform sampler2D VisibilityBuffer;
-uniform sampler2D ShadowMap;
+uniform sampler2D ShadowResult;
 uniform mat4 inverseProj;
 uniform mat4 inverseView;
 uniform mat4 view;
@@ -79,7 +79,7 @@ float findBlocker(vec2 uv, float zReceiver)
     for(int ns = 0;ns < BLOCKER_SEARCH_NUM_SAMPLES;++ns)
     {
         vec2 sampleCoord = (vec2(radius) * poissonDisk[ns]) * texelSize + uv;
-        float cloestDepth = texture(ShadowMap, sampleCoord).x;
+        float cloestDepth = texture(ShadowResult, sampleCoord).x;
         if(zReceiver - 0.002 > cloestDepth)
         {
             blockerDepth += cloestDepth;
@@ -104,7 +104,7 @@ float getShadowBias(float c, float filterRadiusUV)
 
 float useShadowMap(vec4 shadowCoord, float biasC, float filterRadiusUV)
 {
-    float depth = texture(ShadowMap, shadowCoord.xy).x;
+    float depth = texture(ShadowResult, shadowCoord.xy).x;
     float cur_depth = shadowCoord.z;
     float bias = getShadowBias(biasC, filterRadiusUV);
     if(cur_depth - bias >= depth + EPS)
@@ -451,17 +451,12 @@ void main()
 //        rayColor.rgb *= (fadeOnBorder * fadeOnMirror);
         color.xyz += 0.5 * rayColor.xyz;
     }
-    vec4 shadowCoord = lightVP * vec4(worldPos, 1.0);
-    shadowCoord /= shadowCoord.w;
-    shadowCoord.xyz = shadowCoord.xyz * 0.5 + 0.5;
-    float shadow = PCSS(shadowCoord);
-//    float currentDepth = shadowCoord.z;
-//    float closeDepth = texture(ShadowMap, shadowCoord.xy).r;
-//    float shadow = currentDepth - 0.00005 > closeDepth ? 1.0 : 0.0;
-//    if (shadowCoord.x > 1.0 || shadowCoord.x < 0.0 || shadowCoord.y > 1.0 || shadowCoord.y < 0.0)
-//    {
-//        shadow = 0.0;
-//    }
-    color.xyz *= shadow;
+//    vec4 shadowCoord = lightVP * vec4(worldPos, 1.0);
+//    shadowCoord /= shadowCoord.w;
+//    shadowCoord.xyz = shadowCoord.xyz * 0.5 + 0.5;
+//    float shadow = PCSS(shadowCoord);
+//    vec3 shadows = texture(ShadowResult, Texcoord).xyz;
+//    float shadow_f = shadows.y;
+//    color.xyz = color.xyz * (shadow_f * 0.7 * color.w + 0.3 * color.w * color.w);
     FragColor = color;
 }

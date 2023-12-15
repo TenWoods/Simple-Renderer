@@ -6,6 +6,8 @@ layout(location = 0, index = 0) out vec4 out_1;
 layout(location = 1, index = 0) out vec4 out_2;
 layout(location = 2, index = 0) out vec4 out_3;
 
+in vec2 texcoord;
+
 uniform mat4 m_LightViewProjectionMatrix0;
 // For SSABSS
 uniform mat4 m_LightViewMatrix0;
@@ -44,24 +46,26 @@ uniform sampler2D m_SSABSSshadowMap;
 uniform sampler2D NormalMap;
 uniform sampler2D PositionMap;
 
-varying prim
-{
-    vec3 Normal;
-    vec3 NormView;
-    vec4 Position; //screen space position
-    vec4 MVvertex;
-    vec4 WorldViewPosition; //world space position
-}Prim;
+//varying prim
+//{
+//    vec3 Normal;
+//    vec3 NormView;
+//    vec4 Position; //screen space position
+//    vec4 MVvertex;
+//    vec4 WorldViewPosition; //world space position
+//}Prim;
 
 void main()
 {
-    vec3 normal = texture(NormalMap, texture);
-    vec4 worldPosition = texture(PositionMap, texture);
+    vec3 normal = texture(NormalMap, texcoord).xyz;
+    vec4 worldPosition = texture(PositionMap, texcoord);
     vec3 viewNormal = vec3(vec4(normal, 0.0) * inverseView);
 
     vec4 L = vec4(-m_LightPos, 1);
 
     vec4 posView = view * worldPosition;
+    vec4 screenPos = projection * posView;
+    screenPos /= screenPos.w;
     vec4 posLight = m_LightViewMatrix0 * worldPosition;
 
     float depLight = -posLight.z;
@@ -106,9 +110,9 @@ void main()
     float w_p = m_LightSize * (depLight - blocker) / (blocker * zeye);
     w_p = abs(w_p);
     float theta;
-    float px = posView.x/posView.w;
-    float py = posView.y/posView.w;
-    float pz = posView.z/posView.w;
+    float px = posView.x;
+    float py = posView.y;
+    float pz = posView.z;
     float nx = viewNormal.x;
     float ny = viewNormal.y;
     float nz = viewNormal.z;
@@ -145,7 +149,7 @@ void main()
     vec2 axis2 = vec2(-sin(-theta), cos(-theta)) * 0.5 + 0.5;
 
     // out_1 = vec4(Prim.Position.z, 0, 0, 1);
-    out_1 = vec4(shadow, r1 * 0.5, r2 / r1, abs(Prim.Position.z / 100));
+    out_1 = vec4(shadow, r1 * 0.5, r2 / r1, abs(screenPos.z / 100));
     out_2 = vec4(axis1, axis2);
     out_3 = vec4(1, 1, 1, max(0, dot(normal, Lvec)));
 }

@@ -6,7 +6,6 @@ layout(location = 1) out vec4 out_2;
 uniform sampler2D m_SSABSSPreCal1;
 uniform sampler2D m_SSABSSPreCal2;
 uniform float m_Edge;
-
 uniform float m_Texw;
 uniform float m_Texh;
 

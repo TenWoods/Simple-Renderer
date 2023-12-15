@@ -78,7 +78,6 @@ namespace SRenderer
         void calculateShadow();
         void ssr();
         void pre_convolution();
-        //void genShadow();
     private:
         static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     public:
