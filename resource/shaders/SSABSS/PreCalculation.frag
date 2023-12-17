@@ -58,6 +58,7 @@ uniform sampler2D PositionMap;
 void main()
 {
     vec3 normal = texture(NormalMap, texcoord).xyz;
+    normal = normal * vec3(2.0) - vec3(1.0);
     vec4 worldPosition = texture(PositionMap, texcoord);
     vec3 viewNormal = vec3(vec4(normal, 0.0) * inverseView);
 
@@ -76,8 +77,8 @@ void main()
 
     float zFromLight = projCoord.z;
 
-    vec3 Lvec = normalize(L.xyz / L.w - posView.xyz / posView.w);
-    // vec3 Lvec = m_LightDir;
+    //vec3 Lvec = normalize(L.xyz / L.w - posView.xyz / posView.w);
+    vec3 Lvec = m_LightDir;
 
     // Hardshadow
     float shadow = zAtShadowMap < zFromLight - 0.0015 ? 0:1.0;

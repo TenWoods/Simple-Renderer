@@ -63,7 +63,10 @@ namespace SRenderer
         blur_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/blur.frag");
         ssr_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/hiztrace.frag");
         shadowMap_shader = Shader("../../resource/shaders/lightDepth.vert", "../../resource/shaders/lightDepth.frag");
-        visibility_shader = Shader("../../resource/shaders/quad.vert", "../../resource/shaders/genVisibility.frag");
+        blur1_shader = Shader("../../resource/shaders/SSABSS/blur1.vert", "../../resource/shaders/SSABSS/blur1.frag");
+        blur2_shader = Shader("../../resource/shaders/SSABSS/blur2.vert", "../../resource/shaders/SSABSS/blur2.frag");
+        blur3_shader = Shader("../../resource/shaders/SSABSS/blur3.vert", "../../resource/shaders/SSABSS/blur3.frag");
+        preCal_shader = Shader("../../resource/shaders/SSABSS/PreCalculation.vert", "../../resource/shaders/SSABSS/PreCalculation.frag");
         addModel("../../resource/model/sponza/Sponza.gltf");
         addModel("../../resource/model/game/ABeautifulGame.gltf");
 //        addModel("../../resource/model/bottle/WaterBottle.gltf");
@@ -106,7 +109,7 @@ namespace SRenderer
         scene_root[0]->set_scale(glm::vec3(0.1f, 0.1f, 0.1f));
         scene_root[0]->set_position(glm::vec3(0.0f, 0.0f, 0.0f));
         scene_root[1]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
-        scene_root[1]->set_position(glm::vec3(0.0f, 6.0f, 0.0f));
+        scene_root[1]->set_position(glm::vec3(0.0f, 10.0f, 0.0f));
 //        scene_root[2]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
 //        scene_root[2]->set_position(glm::vec3(15.0f, 6.0f, 0.0f));
 //        scene_root[3]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
@@ -564,8 +567,8 @@ namespace SRenderer
         preCal_shader.setMat4("m_LightViewProjectionMatrix0", lightSpaceMatrix);
         preCal_shader.setMat4("m_LightViewMatrix0", lightCamera.get_ViewMatrix());
         preCal_shader.setVec3("m_LightPos", lights[0].get_position());
-        preCal_shader.setVec3("m_LightDir", glm::vec3(1.0f, 1.0f, 0.0f));
-        preCal_shader.setFloat("m_LightSize", 50.0f);
+        preCal_shader.setVec3("m_LightDir", glm::vec3(0.0f, 1.0f, 1.0f));
+        preCal_shader.setFloat("m_LightSize", 0.01f);
         preCal_shader.setMat4("inverseView", mainCamera.get_invView());
         preCal_shader.setMat4("view", mainCamera.get_ViewMatrix());
         preCal_shader.setMat4("projection", mainCamera.get_Projection(WIDTH, HEIGHT, false));
