@@ -117,7 +117,7 @@ void main()
     vec3 lightDir = lightPos.xyz - worldPos.xyz;
     vec3 result = CalculateLighting(baseColor.xyz, F0, cameraDir, lightDir, normal.xyz, metallic, roughness);
     vec3 shadows = texture(ShadowResult, Texcoord).xyz;
-    float shadow_f = shadows.y;
+    float shadow_f = shadows.x;
     result.xyz = result.xyz * (shadow_f * 0.7  + 0.3);
     DirectColor = vec4(result, 1.0);
     ViewPosition = vec4(viewPos.xyz, 1.0);

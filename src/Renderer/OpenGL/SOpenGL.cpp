@@ -50,7 +50,7 @@ namespace SRenderer
         preCal_shader = Shader("../resource/shaders/SSABSS/PreCalculation.vert", "../resource/shaders/SSABSS/PreCalculation.frag");
         //shadow_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/PCSS.frag");
         addModel("../resource/model/Sponza/glTF/Sponza.gltf");
-//        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
+        //addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
         addModel("../resource/model/AGAME/ABeautifulGame.gltf");
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
@@ -118,7 +118,7 @@ namespace SRenderer
 //        scene_root[4]->set_position(glm::vec3(0.0f, 6.0f, 10.0f));
 //        scene_root[5]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
 //        scene_root[5]->set_position(glm::vec3(15.0f, 6.0f, -10.0f));
-        addLight(SLight(glm::vec3(0.0, 20.0, 0.0), glm::vec3(1000.0, 1000.0, 1000.0)));
+        addLight(SLight(glm::vec3(-40.0, 40.0, 0.0), glm::vec3(5000.0, 5000.0, 5000.0)));
 
         deferredRendering();
     }
@@ -341,7 +341,7 @@ namespace SRenderer
         genTexture(&SSABSS_Blur1_1);
         genTexture(&SSABSS_Blur1_2);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, SSABSS_Blur1_1, 0);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, SSABSS_Blur1_1, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, SSABSS_Blur1_2, 0);
         glDrawBuffers(2, attachments);
 
         glGenFramebuffers(1, &blur2Pass);
@@ -567,8 +567,8 @@ namespace SRenderer
         preCal_shader.setMat4("m_LightViewProjectionMatrix0", lightSpaceMatrix);
         preCal_shader.setMat4("m_LightViewMatrix0", lightCamera.get_ViewMatrix());
         preCal_shader.setVec3("m_LightPos", lights[0].get_position());
-        preCal_shader.setVec3("m_LightDir", glm::vec3(0.0f, 1.0f, 1.0f));
-        preCal_shader.setFloat("m_LightSize", 0.01f);
+//        preCal_shader.setVec3("m_LightDir", glm::vec3(0.0f, 1.0f, 1.0f));
+        preCal_shader.setFloat("m_LightSize", 13.0f);
         preCal_shader.setMat4("inverseView", mainCamera.get_invView());
         preCal_shader.setMat4("view", mainCamera.get_ViewMatrix());
         preCal_shader.setMat4("projection", mainCamera.get_Projection(WIDTH, HEIGHT, false));
@@ -585,7 +585,7 @@ namespace SRenderer
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         blur1_shader.use();
-        blur1_shader.setFloat("m_Edge", 0.001f);
+        blur1_shader.setFloat("m_Edge", 0.1f);
         blur1_shader.setFloat("m_Texw", WIDTH);
         blur1_shader.setFloat("m_Texh", HEIGHT);
         glActiveTexture(GL_TEXTURE0);
@@ -599,7 +599,7 @@ namespace SRenderer
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         blur2_shader.use();
-        blur2_shader.setFloat("m_Edge", 0.001f);
+        blur2_shader.setFloat("m_Edge", 0.1f);
         blur2_shader.setFloat("m_Texw", WIDTH);
         blur2_shader.setFloat("m_Texh", HEIGHT);
         glActiveTexture(GL_TEXTURE0);
@@ -615,7 +615,7 @@ namespace SRenderer
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         blur3_shader.use();
-        blur3_shader.setFloat("m_Edge", 0.001f);
+        blur3_shader.setFloat("m_Edge", 0.1f);
         blur3_shader.setFloat("m_Texw", WIDTH);
         blur3_shader.setFloat("m_Texh", HEIGHT);
         glActiveTexture(GL_TEXTURE0);

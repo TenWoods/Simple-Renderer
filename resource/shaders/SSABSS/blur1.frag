@@ -52,7 +52,7 @@ void main()
     kernel_sum = 1; // 1 is equivalent to normaldist(sigma , 0);
 
     blur.x = shadowdep_left.x * kernel_sum;
-    for (float i = 1; i <= range; i++)
+    for (int i = 1; i <= range; i++)
     {
         float kerneli = normaldist(sigma, i);
         shadowdep_left = texture(m_SSABSSPreCal1, position + i * texcodl).xw;

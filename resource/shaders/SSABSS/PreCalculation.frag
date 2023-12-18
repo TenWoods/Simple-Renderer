@@ -13,7 +13,6 @@ uniform mat4 m_LightViewProjectionMatrix0;
 uniform mat4 m_LightViewMatrix0;
 
 uniform vec3 m_LightPos;
-uniform vec3 m_LightDir;
 
 uniform float m_LightSize;
 
@@ -58,12 +57,11 @@ uniform sampler2D PositionMap;
 void main()
 {
     vec3 normal = texture(NormalMap, texcoord).xyz;
-    normal = normal * vec3(2.0) - vec3(1.0);
     vec4 worldPosition = texture(PositionMap, texcoord);
     vec3 viewNormal = vec3(vec4(normal, 0.0) * inverseView);
 
     vec4 L = vec4(-m_LightPos, 1);
-
+    //L = view * L;
     vec4 posView = view * worldPosition;
     vec4 screenPos = projection * posView;
     screenPos /= screenPos.w;
@@ -77,8 +75,8 @@ void main()
 
     float zFromLight = projCoord.z;
 
-    //vec3 Lvec = normalize(L.xyz / L.w - posView.xyz / posView.w);
-    vec3 Lvec = m_LightDir;
+    vec3 Lvec = normalize(L.xyz / L.w - posView.xyz / posView.w);
+    //vec3 Lvec = m_LightDir;
 
     // Hardshadow
     float shadow = zAtShadowMap < zFromLight - 0.0015 ? 0:1.0;
@@ -150,7 +148,7 @@ void main()
     vec2 axis2 = vec2(-sin(-theta), cos(-theta)) * 0.5 + 0.5;
 
     // out_1 = vec4(Prim.Position.z, 0, 0, 1);
-    out_1 = vec4(shadow, r1 * 0.5, r2 / r1, abs(screenPos.z / 100));
+    out_1 = vec4(shadow, r1 * 0.5, r2 / r1, abs(screenPos.z / 100.0));
     out_2 = vec4(axis1, axis2);
     out_3 = vec4(1, 1, 1, max(0, dot(normal, Lvec)));
 }
