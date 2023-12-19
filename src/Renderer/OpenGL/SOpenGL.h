@@ -26,8 +26,6 @@ namespace SRenderer
         Shader blur2_shader;
         Shader blur3_shader;
         Shader preCal_shader;
-        Shader shadow_shader;
-        Shader visibility_shader;
         Camera mainCamera;
         Camera lightCamera;
         glm::mat4 lightSpaceMatrix;
@@ -43,14 +41,13 @@ namespace SRenderer
         unsigned int directPass;
         unsigned int hizPass;
         unsigned int pre_convolutionPass;
-        unsigned int shadowPass;
+//        unsigned int shadowPass;
         unsigned int blur1Pass;
         unsigned int blur2Pass;
         unsigned int blur3Pass;
         unsigned int preCalPass;
         //Textures
         unsigned int shadowMap;
-        unsigned int shadow;
         unsigned int directResult, viewPosition;
         unsigned int tempTex;
         unsigned int visibilityMap;

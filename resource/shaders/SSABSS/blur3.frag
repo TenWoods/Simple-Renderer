@@ -36,6 +36,7 @@ void main()
 
     vec2 texcodl = axisvec / m_Texw, texcodr = -axisvec / m_Texh;
     //consider the gradient of the surface for bilateral filter
+    //float singrad = sqrt(1 - pow(origin.z, 2));
     float singrad;
     float ol = origin.w - texture(m_SSABSSBlur22, position + 2 * texcodl).w;
     float or = origin.w - texture(m_SSABSSBlur22, position + 2 * texcodr).w;

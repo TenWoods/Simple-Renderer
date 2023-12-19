@@ -326,15 +326,15 @@ namespace SRenderer
         glGenerateMipmap(GL_TEXTURE_2D);
 
         //init shadow pass
-        glGenFramebuffers(1, &shadowPass);
-        glBindFramebuffer(GL_FRAMEBUFFER, shadowPass);
-        glGenTextures(1, &shadow);
-        glBindTexture(GL_TEXTURE_2D, shadow);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, WIDTH, HEIGHT, 0, GL_RED, GL_FLOAT, nullptr);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, shadow, 0);
-        glDrawBuffers(1, attachments);
+//        glGenFramebuffers(1, &shadowPass);
+//        glBindFramebuffer(GL_FRAMEBUFFER, shadowPass);
+//        glGenTextures(1, &shadow);
+//        glBindTexture(GL_TEXTURE_2D, shadow);
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, WIDTH, HEIGHT, 0, GL_RED, GL_FLOAT, nullptr);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, shadow, 0);
+//        glDrawBuffers(1, attachments);
 
         glGenFramebuffers(1, &blur1Pass);
         glBindFramebuffer(GL_FRAMEBUFFER, blur1Pass);
@@ -568,7 +568,7 @@ namespace SRenderer
         preCal_shader.setMat4("m_LightViewMatrix0", lightCamera.get_ViewMatrix());
         preCal_shader.setVec3("m_LightPos", lights[0].get_position());
 //        preCal_shader.setVec3("m_LightDir", glm::vec3(0.0f, 1.0f, 1.0f));
-        preCal_shader.setFloat("m_LightSize", 13.0f);
+        preCal_shader.setFloat("m_LightSize", 1000.0f);
         preCal_shader.setMat4("inverseView", mainCamera.get_invView());
         preCal_shader.setMat4("view", mainCamera.get_ViewMatrix());
         preCal_shader.setMat4("projection", mainCamera.get_Projection(WIDTH, HEIGHT, false));
