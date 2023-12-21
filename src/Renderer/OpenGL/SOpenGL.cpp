@@ -96,7 +96,7 @@ namespace SRenderer
         ssr_shader.setInt("DepthBuffer", 2);
         ssr_shader.setInt("PositionBuffer", 3);
         ssr_shader.setInt("VisibilityBuffer", 4);
-        ssr_shader.setInt("ShadowResult", 5);
+        ssr_shader.setInt("BaseColorMap", 5);
         direct_shader.use();
         direct_shader.setInt("BaseColorMap", 0);
         direct_shader.setInt("NormalMap", 1);
@@ -118,7 +118,7 @@ namespace SRenderer
 //        scene_root[4]->set_position(glm::vec3(0.0f, 6.0f, 10.0f));
 //        scene_root[5]->set_scale(glm::vec3(50.0f, 50.0f, 50.0f));
 //        scene_root[5]->set_position(glm::vec3(15.0f, 6.0f, -10.0f));
-        addLight(SLight(glm::vec3(-40.0, 40.0, 0.0), glm::vec3(5000.0, 5000.0, 5000.0)));
+        addLight(SLight(glm::vec3(-40.0, 40.0, 0.0), glm::vec3(1000.0, 1000.0, 1000.0)));
 
         deferredRendering();
     }
@@ -568,7 +568,7 @@ namespace SRenderer
         preCal_shader.setMat4("m_LightViewMatrix0", lightCamera.get_ViewMatrix());
         preCal_shader.setVec3("m_LightPos", lights[0].get_position());
 //        preCal_shader.setVec3("m_LightDir", glm::vec3(0.0f, 1.0f, 1.0f));
-        preCal_shader.setFloat("m_LightSize", 1000.0f);
+        preCal_shader.setFloat("m_LightSize", 14.0f);
         preCal_shader.setMat4("inverseView", mainCamera.get_invView());
         preCal_shader.setMat4("view", mainCamera.get_ViewMatrix());
         preCal_shader.setMat4("projection", mainCamera.get_Projection(WIDTH, HEIGHT, false));
@@ -585,7 +585,7 @@ namespace SRenderer
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         blur1_shader.use();
-        blur1_shader.setFloat("m_Edge", 0.1f);
+        blur1_shader.setFloat("m_Edge", 0.006f);
         blur1_shader.setFloat("m_Texw", WIDTH);
         blur1_shader.setFloat("m_Texh", HEIGHT);
         glActiveTexture(GL_TEXTURE0);
@@ -599,7 +599,7 @@ namespace SRenderer
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         blur2_shader.use();
-        blur2_shader.setFloat("m_Edge", 0.1f);
+        blur2_shader.setFloat("m_Edge", 0.006f);
         blur2_shader.setFloat("m_Texw", WIDTH);
         blur2_shader.setFloat("m_Texh", HEIGHT);
         glActiveTexture(GL_TEXTURE0);
@@ -615,7 +615,7 @@ namespace SRenderer
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         blur3_shader.use();
-        blur3_shader.setFloat("m_Edge", 0.1f);
+        blur3_shader.setFloat("m_Edge", 0.006f);
         blur3_shader.setFloat("m_Texw", WIDTH);
         blur3_shader.setFloat("m_Texh", HEIGHT);
         glActiveTexture(GL_TEXTURE0);
@@ -655,6 +655,8 @@ namespace SRenderer
         glBindTexture(GL_TEXTURE_2D, worldPosition);
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, visibilityMap);
+        glActiveTexture(GL_TEXTURE5);
+        glBindTexture(GL_TEXTURE_2D, GBuffer[0]);
 //        glActiveTexture(GL_TEXTURE0 + 3);
 //        glBindTexture(GL_TEXTURE_2D, shadowMap);
         //glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);

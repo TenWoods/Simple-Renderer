@@ -148,7 +148,7 @@ void main()
     vec2 axis2 = vec2(-sin(-theta), cos(-theta)) * 0.5 + 0.5;
 
     // out_1 = vec4(Prim.Position.z, 0, 0, 1);
-    out_1 = vec4(shadow, r1 * 0.5, r2 / r1, abs(screenPos.z / 100.0));
+    out_1 = vec4(shadow, r1 * 0.5, r2 / r1, abs(posView.z / 100.0));
     out_2 = vec4(axis1, axis2);
     out_3 = vec4(1, 1, 1, max(0, dot(normal, Lvec)));
 }

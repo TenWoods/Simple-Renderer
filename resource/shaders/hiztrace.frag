@@ -8,7 +8,7 @@ uniform sampler2D NormalBuffer;
 uniform sampler2D DepthBuffer;
 uniform sampler2D PositionBuffer;
 uniform sampler2D VisibilityBuffer;
-uniform sampler2D ShadowResult;
+uniform sampler2D BaseColorMap;
 uniform mat4 inverseProj;
 uniform mat4 inverseView;
 uniform mat4 view;
@@ -25,112 +25,46 @@ const int MAX_MIPMAP_LEVEL = 4;
 const float MIN_SPECULAR_POWER = 0.1;
 const float MAX_SPECULAR_POWER = 1024.0;
 
-#define FADE_BORDER_START		0.8
-#define FADE_BORDER_END			1.0
-#define FADE_MIRROR_FACTOR		10.0
-#define saturate(x) clamp(x, 0.0, 1.0)
+const float PI = 3.14159265359;
 
-#define SHADOW_MAP_SIZE 2048.
-#define NUM_SAMPLES 50
-#define BLOCKER_SEARCH_NUM_SAMPLES NUM_SAMPLES
-#define NUM_RINGS 10
-#define EPS 1e-3
-#define FRUSTUM_SIZE 400.
-#define LIGHT_WORLD_SIZE 5.
-#define LIGHT_SIZE_UV LIGHT_WORLD_SIZE / FRUSTUM_SIZE
-#define PI 3.141592653589793
-#define PI2 6.283185307179586
-
-vec3 vNormal;
-vec3 vFragPos;
-vec2 poissonDisk[NUM_SAMPLES];
-
-highp float rand_2to1(vec2 uv )
+float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
-    // 0 - 1
-    const highp float a = 12.9898, b = 78.233, c = 43758.5453;
-    highp float dt = dot( uv.xy, vec2( a,b ) ), sn = mod( dt, PI );
-    return fract(sin(sn) * c);
+    float a = roughness*roughness;
+    float a2 = a*a;
+    float NdotH = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH*NdotH;
+
+    float nom = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+
+    return nom / denom;
 }
 
-void poissonDiskSamples( const in vec2 randomSeed )
+float GeometrySchlickGGX(float NdotV, float roughness)
 {
+    float r = (roughness + 1.0);
+    float k = (r*r) / 8.0;
 
-    float ANGLE_STEP = PI2 * float( NUM_RINGS ) / float( NUM_SAMPLES );
-    float INV_NUM_SAMPLES = 1.0 / float( NUM_SAMPLES );
+    float nom = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
 
-    float angle = rand_2to1( randomSeed ) * PI2;
-    float radius = INV_NUM_SAMPLES;
-    float radiusStep = radius;
-
-    for( int i = 0; i < NUM_SAMPLES; i ++ ) {
-        poissonDisk[i] = vec2( cos( angle ), sin( angle ) ) * pow( radius, 0.75 );
-        radius += radiusStep;
-        angle += ANGLE_STEP;
-    }
+    return nom / denom;
 }
 
-float findBlocker(vec2 uv, float zReceiver)
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 {
-    const int radius = 40;
-    const vec2 texelSize = vec2(1.0/2048.0, 1.0/2048.0);
-    float cnt = 0.0, blockerDepth = 0.0;
-    int flag = 0;
-    for(int ns = 0;ns < BLOCKER_SEARCH_NUM_SAMPLES;++ns)
-    {
-        vec2 sampleCoord = (vec2(radius) * poissonDisk[ns]) * texelSize + uv;
-        float cloestDepth = texture(ShadowResult, sampleCoord).x;
-        if(zReceiver - 0.002 > cloestDepth)
-        {
-            blockerDepth += cloestDepth;
-            cnt += 1.0;
-            flag = 1;
-        }
-    }
-    if(flag == 1)
-    {
-        return blockerDepth / cnt;
-    }
-    return 1.0;
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+    float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+
+    return ggx1 * ggx2;
 }
 
-float getShadowBias(float c, float filterRadiusUV)
+vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
-    vec3 normal = normalize(vNormal);
-    vec3 lightDir = normalize(uLightPos - vFragPos);
-    float fragSize = (1. + ceil(filterRadiusUV)) * (FRUSTUM_SIZE / SHADOW_MAP_SIZE / 2.);
-    return max(fragSize, fragSize * (1.0 - dot(normal, lightDir))) * c;
-}
-
-float useShadowMap(vec4 shadowCoord, float biasC, float filterRadiusUV)
-{
-    float depth = texture(ShadowResult, shadowCoord.xy).x;
-    float cur_depth = shadowCoord.z;
-    float bias = getShadowBias(biasC, filterRadiusUV);
-    if(cur_depth - bias >= depth + EPS)
-    {
-        return 0.;
-    }
-    else
-    {
-        return 1.0;
-    }
-}
-
-float PCF(vec4 coords, float biasC, float filterRadiusUV)
-{
-    poissonDiskSamples(coords.xy);
-    float visibility = 0.0;
-    for(int i = 0; i < NUM_SAMPLES; i++)
-    {
-        vec2 offset = poissonDisk[i] * filterRadiusUV;
-        float shadowDepth = useShadowMap(coords + vec4(offset, 0., 0.), biasC, filterRadiusUV);
-        if(coords.z > shadowDepth + EPS)
-        {
-            visibility++;
-        }
-    }
-    return 1.0 - visibility / float(NUM_SAMPLES);
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
 vec3 IntersectionDepthPlane(vec3 origin, vec3 direction, float t)
@@ -378,28 +312,12 @@ vec3 HizConeTrace(vec2 intersectPos, float roughness)
 //    return result;
 //}
 
-float PCSS(vec4 shadowCoord)
-{
-    // STEP 1: avgblocker depth
-    float avgBlockerDepth = findBlocker(shadowCoord.xy, shadowCoord.z);
-    if(avgBlockerDepth < -EPS)
-    {
-        return 1.0f;
-    }
-
-    // STEP 2: penumbra size
-    float penumbraSize = max(shadowCoord.z - avgBlockerDepth, 0.0)/ avgBlockerDepth * LIGHT_SIZE_UV;
-
-    // STEP 3: filtering
-    float pcfBiasC = .08;
-    return PCF(shadowCoord, pcfBiasC, penumbraSize);
-}
-
 void main()
 {
     vec4 normal = texture(NormalBuffer, Texcoord);
-    vNormal = normal.xyz;
     float roughness = normal.w;
+    vec4 baseColor = texture(BaseColorMap, Texcoord);
+    float metallic = baseColor.w;
 //    normal.xyz *= 2.0;
 //    normal.xyz -= 1.0;
     vec3 viewNormal = vec3(vec4(normal.xyz, 0.0) * inverseView);
@@ -417,7 +335,6 @@ void main()
     vec4 viewPos = inverseProj * clipPos;
     viewPos /= viewPos.w;
     vec3 worldPos = (inverseView * viewPos).xyz;
-    vFragPos = worldPos.xyz;
     vec4 beginViewPos = view * vec4(worldPos, 1.0);
     vec4 beginClipPos = projection * beginViewPos;
     beginClipPos /= beginClipPos.w;
@@ -442,21 +359,28 @@ void main()
     if (Hiztrace(beginClipPos.xyz, reflectDirClip, maxDistance, resultPos))
     {
         //vec3 rayColor = textureLod(ColorBuffer, resultPos.xy, 0.0).xyz;
+        vec3 viewDir = -normalize(viewPos.xyz);
+        vec3 halfVec = normalize(viewDir + reflectDir.xyz);
         vec3 rayColor = HizConeTrace(resultPos.xy, roughness);
+        vec3 F0 = vec3(0.04);
+        F0 = mix(F0, baseColor.xyz, metallic);
+        float D = DistributionGGX(viewNormal, halfVec, roughness);
+        float G = GeometrySmith(viewNormal, viewDir, reflectDir.xyz, roughness);
+        vec3 F = fresnelSchlick(max(dot(halfVec, viewDir), 0.0), F0);
+
+        vec3 numerator = D * G * F;
+        float denominator = 4.0 * max(dot(viewNormal, viewDir), 0.0) * max(dot(viewNormal, reflectDir.xyz), 0.0);
+        vec3 specular = numerator / max(denominator, 0.001);
 //        float boundary = distance(resultPos.xy, vec2(0.5)) * 2.0;
 //        float fadeOnBorder = 1.0 - saturate((boundary - FADE_BORDER_START) / (FADE_BORDER_END - FADE_BORDER_START));
 //
 //        /* Compute fading on mirror (rays towards the camera) */
 //        float fadeOnMirror = saturate(reflectDir.z * FADE_MIRROR_FACTOR);
 //        rayColor.rgb *= (fadeOnBorder * fadeOnMirror);
-        color.xyz += 0.5 * rayColor.xyz;
+        float NdotL = max(dot(viewNormal, reflectDir.xyz), 0.0);
+        color.xyz += F * rayColor.xyz;
     }
-//    vec4 shadowCoord = lightVP * vec4(worldPos, 1.0);
-//    shadowCoord /= shadowCoord.w;
-//    shadowCoord.xyz = shadowCoord.xyz * 0.5 + 0.5;
-//    float shadow = PCSS(shadowCoord);
-//    vec3 shadows = texture(ShadowResult, Texcoord).xyz;
-//    float shadow_f = shadows.y;
-//    color.xyz = color.xyz * (shadow_f * 0.7 * color.w + 0.3 * color.w * color.w);
+//    color.xyz = color.xyz / (color.xyz + vec3(1.0));
+    color.xyz = pow(color.xyz, vec3(1.0 / 2.2));
     FragColor = color;
 }
