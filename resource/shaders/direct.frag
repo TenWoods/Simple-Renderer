@@ -15,7 +15,7 @@ uniform mat4 view;
 uniform sampler2D BaseColorMap;
 uniform sampler2D NormalMap;
 uniform sampler2D DepthMap;
-uniform sampler2D PositionMap;
+//uniform sampler2D PositionMap;
 uniform sampler2D ShadowResult;
 
 const float PI = 3.14159265359;
@@ -84,7 +84,7 @@ vec3 CalculateLighting(vec3 baseColor, vec3 F0, vec3 viewDir, vec3 lightDir, vec
     kD *= 1.0 - metallic;
 
     float NdotL = max(dot(normal, lightDir), 0.0);
-    Lo += (kD * baseColor / PI + specular) * radiance * NdotL;
+    Lo += (kD * baseColor / PI + specular) * radiance * NdotL + 0.005 * baseColor;
     return Lo;
 }
 
@@ -118,7 +118,9 @@ void main()
     vec3 result = CalculateLighting(baseColor.xyz, F0, cameraDir, lightDir, normal.xyz, metallic, roughness);
     vec3 shadows = texture(ShadowResult, Texcoord).xyz;
     float shadow_f = shadows.x;
-    result.xyz = result.xyz * (shadow_f * 0.7  + 0.3);
+    result.xyz = result.xyz * shadow_f;
+//    result.xyz = result.xyz / (result.xyz + vec3(1.0));
+//    result.xyz = pow(result.xyz, vec3(1.0 / 2.2));
     DirectColor = vec4(result, 1.0);
     ViewPosition = vec4(viewPos.xyz, 1.0);
 }

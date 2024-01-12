@@ -6,7 +6,7 @@ in vec2 Texcoord;
 uniform sampler2D ColorBuffer;
 uniform sampler2D NormalBuffer;
 uniform sampler2D DepthBuffer;
-uniform sampler2D PositionBuffer;
+//uniform sampler2D PositionBuffer;
 uniform sampler2D VisibilityBuffer;
 uniform sampler2D BaseColorMap;
 uniform mat4 inverseProj;
@@ -315,18 +315,25 @@ vec3 HizConeTrace(vec2 intersectPos, float roughness)
 void main()
 {
     vec4 normal = texture(NormalBuffer, Texcoord);
-    float roughness = normal.w;
+    //float roughness = normal.w;
+    float roughness = 0.3;
     vec4 baseColor = texture(BaseColorMap, Texcoord);
-    float metallic = baseColor.w;
-//    normal.xyz *= 2.0;
-//    normal.xyz -= 1.0;
-    vec3 viewNormal = vec3(vec4(normal.xyz, 0.0) * inverseView);
-    //vec3 viewNormal = normal.xyz;
     vec4 color = texture(ColorBuffer, Texcoord);
     color.w = 1.0;
-    //vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
-    //calculate position
-    //vec3 worldPos = texture(PositionBuffer, Texcoord).xyz;
+    float metallic = baseColor.w;
+    if (metallic <= 0.2)
+    {
+        color.xyz = color.xyz / (color.xyz + vec3(1.0));
+        color.xyz = pow(color.xyz, vec3(1.0 / 2.2));
+        FragColor = color;
+        return;
+    }
+//    if (roughness <= 0.1)
+//    {
+//        roughness = 1.0;
+//    }
+    vec3 viewNormal = vec3(vec4(normal.xyz, 0.0) * inverseView);
+
     vec2 screenPos = Texcoord * 2.0 - 1.0;
     float depth = texture(DepthBuffer, Texcoord).x;
     depth *= 2.0;
@@ -358,10 +365,22 @@ void main()
     vec3 resultPos = vec3(0.0);
     if (Hiztrace(beginClipPos.xyz, reflectDirClip, maxDistance, resultPos))
     {
+        vec3 rayColor = vec3(0.0);
+        if (roughness < 0.01f)
+        {
+            rayColor = textureLod(ColorBuffer, resultPos.xy, 0.0).xyz;
+        }
+        else if (roughness >= 0.99f)
+        {
+            rayColor = vec3(0.0);
+        }
+        else
+        {
+            rayColor = HizConeTrace(resultPos.xy, roughness);
+        }
         //vec3 rayColor = textureLod(ColorBuffer, resultPos.xy, 0.0).xyz;
         vec3 viewDir = -normalize(viewPos.xyz);
         vec3 halfVec = normalize(viewDir + reflectDir.xyz);
-        vec3 rayColor = HizConeTrace(resultPos.xy, roughness);
         vec3 F0 = vec3(0.04);
         F0 = mix(F0, baseColor.xyz, metallic);
         float D = DistributionGGX(viewNormal, halfVec, roughness);
@@ -378,9 +397,9 @@ void main()
 //        float fadeOnMirror = saturate(reflectDir.z * FADE_MIRROR_FACTOR);
 //        rayColor.rgb *= (fadeOnBorder * fadeOnMirror);
         float NdotL = max(dot(viewNormal, reflectDir.xyz), 0.0);
-        color.xyz += F * rayColor.xyz;
+        color.xyz += baseColor.xyz * rayColor.xyz;
     }
-//    color.xyz = color.xyz / (color.xyz + vec3(1.0));
+    color.xyz = color.xyz / (color.xyz + vec3(1.0));
     color.xyz = pow(color.xyz, vec3(1.0 / 2.2));
     FragColor = color;
 }

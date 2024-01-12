@@ -60,7 +60,7 @@ namespace SRenderer
     {
         if (isOrtho)
         {
-            return glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, 1.0f, 100.0f);
+            return glm::ortho(-30.0f, 30.0f, -30.0f, 30.0f, 1.0f, 100.0f);
         }
         else
         {

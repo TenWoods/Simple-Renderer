@@ -1,11 +1,13 @@
 #include "SOpenGL.h"
 #include <iostream>
 #include <functional>
+#include <glm/gtx/string_cast.hpp>
+#include <chrono>
 
 namespace SRenderer
 {
-    SOpenGL::SOpenGL() : mainCamera(glm::vec3(-70.0, 20.0, 0.0), glm::vec3(0.0, 1.0, 0.0), 0.0f, 0.0f),
-                         lightCamera(glm::vec3(0.0, 30.0, 0.0), glm::vec3(0.0, 1.0, 0.0), 0.0, -45.0f),
+    SOpenGL::SOpenGL() : mainCamera(glm::vec3(-24.0, 15.0, 8.0), glm::vec3(0.0, 1.0, 0.0), -40.0f, 0.0f),
+                         lightCamera(glm::vec3(-15.0, 30.0, 0.0), glm::vec3(0.0, 1.0, 0.0), 0.0, -45.0f),
                          lastFrame(0.0), deltaTime(0.0)
     {
 
@@ -51,7 +53,8 @@ namespace SRenderer
         //shadow_shader = Shader("../resource/shaders/quad.vert", "../resource/shaders/PCSS.frag");
         addModel("../resource/model/Sponza/glTF/Sponza.gltf");
         //addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
-        addModel("../resource/model/AGAME/ABeautifulGame.gltf");
+        //addModel("../resource/model/AGAME/ABeautifulGame.gltf");
+        addModel("../resource/model/board_m0/board_r1.gltf");
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
 //        addModel("../resource/model/WaterBottle/glTF/WaterBottle.gltf");
@@ -94,15 +97,15 @@ namespace SRenderer
         ssr_shader.setInt("ColorBuffer", 0);
         ssr_shader.setInt("NormalBuffer", 1);
         ssr_shader.setInt("DepthBuffer", 2);
-        ssr_shader.setInt("PositionBuffer", 3);
-        ssr_shader.setInt("VisibilityBuffer", 4);
-        ssr_shader.setInt("BaseColorMap", 5);
+//        ssr_shader.setInt("PositionBuffer", 3);
+        ssr_shader.setInt("VisibilityBuffer", 3);
+        ssr_shader.setInt("BaseColorMap", 4);
         direct_shader.use();
         direct_shader.setInt("BaseColorMap", 0);
         direct_shader.setInt("NormalMap", 1);
         direct_shader.setInt("DepthMap", 2);
-        direct_shader.setInt("PositionMap", 3);
-        direct_shader.setInt("ShadowResult", 4);
+//        direct_shader.setInt("PositionMap", 3);
+        direct_shader.setInt("ShadowResult", 3);
         lightCamera.set_Zoom(90.0f);
         //ssr_shader.use();
         //hiz_shader.use();
@@ -149,7 +152,8 @@ namespace SRenderer
             mainCamera.rotate(-4.0, 0.0);
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
             mainCamera.rotate(4.0, 0.0);
-    }
+        std::cout << glm::to_string(mainCamera.get_Position()) << std::endl;
+    };
 
     void SOpenGL::set_light()
     {
@@ -202,15 +206,6 @@ namespace SRenderer
         glBindFramebuffer(GL_FRAMEBUFFER, gbufferPass);
 
         glGenTextures(3, GBuffer);
-        //Generate Color and Normal buffer
-//        for (int i = 0; i < 2; i++)
-//        {
-//            glBindTexture(GL_TEXTURE_2D, GBuffer[i]);
-//            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
-//            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, GBuffer[i], 0);
-//        }
         //Color buffer
         glBindTexture(GL_TEXTURE_2D, GBuffer[0]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
@@ -221,7 +216,6 @@ namespace SRenderer
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
         //Generate Depth buffer
         levelsCount = 7;
         glBindTexture(GL_TEXTURE_2D, GBuffer[2]);
@@ -372,8 +366,12 @@ namespace SRenderer
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
+        std::chrono::time_point<std::chrono::steady_clock> frame_start;
+        std::chrono::time_point<std::chrono::steady_clock> frame_end;
+        std::chrono::microseconds frame_time;
         while (!glfwWindowShouldClose(window))
         {
+            frame_start = std::chrono::steady_clock::now();
             float currentFrame = static_cast<float>(glfwGetTime());
             deltaTime = currentFrame - lastFrame;
             lastFrame = currentFrame;
@@ -394,7 +392,9 @@ namespace SRenderer
 
             glfwSwapBuffers(window);
             glfwPollEvents();
-//            std::cout << deltaTime << std::endl;
+            frame_end = std::chrono::steady_clock::now();
+            frame_time = std::chrono::duration_cast<std::chrono::microseconds>(frame_end - frame_start);
+//            std::cout << frame_time.count() << std::endl;
         }
     }
 
@@ -418,18 +418,12 @@ namespace SRenderer
         gbuffer_shader.setMat4("projection", projection);
         gbuffer_shader.setMat4("view", view);
         set_light();
-        //gbuffer_shader.setMat4("model", glm::mat4(1.0f));
-        //scene_root[1]->draw(gbuffer_shader);
-//        for (auto& object : scene_root)
-//        {
-//            //std::cout << "Draw" << std::endl;
-//            object->draw(gbuffer_shader);
-//        }
         scene_root[0]->draw(gbuffer_shader);
         scene_root[1]->draw(gbuffer_shader);
 
         // draw shadow map
         glBindFramebuffer(GL_FRAMEBUFFER, shadowMapPass);
+        glViewport(0, 0, WIDTH, HEIGHT);
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shadowMap_shader.use();
@@ -437,14 +431,10 @@ namespace SRenderer
         view = lightCamera.get_ViewMatrix();
         lightSpaceMatrix = projection * view;
         shadowMap_shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-//        for (auto& object : scene_root)
-//        {
-//            //std::cout << "Draw" << std::endl;
-//            object->draw(shadowMap_shader);
-//        }
         scene_root[0]->draw(shadowMap_shader);
         scene_root[1]->draw(shadowMap_shader);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, WIDTH, HEIGHT);
     }
 
     void SOpenGL::directLighting()
@@ -465,9 +455,9 @@ namespace SRenderer
             glActiveTexture(GL_TEXTURE0 + i);
             glBindTexture(GL_TEXTURE_2D, GBuffer[i]);
         }
-        glActiveTexture(GL_TEXTURE0 + 3);
-        glBindTexture(GL_TEXTURE_2D, worldPosition);
-        glActiveTexture(GL_TEXTURE4);
+//        glActiveTexture(GL_TEXTURE0 + 3);
+//        glBindTexture(GL_TEXTURE_2D, worldPosition);
+        glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, SSABSS_Blur3_1);
         glBindVertexArray(quadVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -499,8 +489,6 @@ namespace SRenderer
         glDrawArrays(GL_TRIANGLES, 0, 6);
         for (int i = 1; i < levelsCount; i++)
         {
-            //glClearColor(0.0, 0.0, 0.0, 1.0);
-            //glClear(GL_COLOR_BUFFER_BIT);
             hiz_shader.setVec2i("previousDim", glm::ivec2(lastWidth, lastHeight));
             hiz_shader.setInt("previousLevel", i - 1);
             lastWidth /= 2;
@@ -512,7 +500,6 @@ namespace SRenderer
             glDrawBuffers(2, attachments);
             glBindVertexArray(quadVAO);
             glDrawArrays(GL_TRIANGLES, 0, 6);
-
         }
         glBindVertexArray(0);
         glDepthMask(GL_TRUE);
@@ -560,6 +547,7 @@ namespace SRenderer
 
     void SOpenGL::calculateShadow()
     {
+        glViewport(0, 0, WIDTH, HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, preCalPass);
         glClearColor(1.0, 1.0, 1.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -628,6 +616,7 @@ namespace SRenderer
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
         glBindVertexArray(0);
+        glViewport(0, 0, WIDTH, HEIGHT);
     }
 
     void SOpenGL::ssr()
@@ -651,11 +640,11 @@ namespace SRenderer
         glBindTexture(GL_TEXTURE_2D, GBuffer[1]);
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, GBuffer[2]);
+//        glActiveTexture(GL_TEXTURE3);
+//        glBindTexture(GL_TEXTURE_2D, worldPosition);
         glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, worldPosition);
-        glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, visibilityMap);
-        glActiveTexture(GL_TEXTURE5);
+        glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, GBuffer[0]);
 //        glActiveTexture(GL_TEXTURE0 + 3);
 //        glBindTexture(GL_TEXTURE_2D, shadowMap);
