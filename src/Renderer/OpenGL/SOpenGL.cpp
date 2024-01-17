@@ -8,9 +8,11 @@ namespace SRenderer
 {
     SOpenGL::SOpenGL() : mainCamera(glm::vec3(-24.0, 15.0, 8.0), glm::vec3(0.0, 1.0, 0.0), -40.0f, 0.0f),
                          lightCamera(glm::vec3(-15.0, 30.0, 0.0), glm::vec3(0.0, 1.0, 0.0), 0.0, -45.0f),
-                         lastFrame(0.0), deltaTime(0.0)
+                         lastFrame(0.0), deltaTime(0.0), m_logger("exp")
     {
-
+        m_logger.setFileOut(true);
+        m_logger.setPath("../exp_result/exp.csv");
+        m_logger.file_output("loop time, gbuffer time, shadow time, direct time ,hiz time, ssr time");
     }
     void SOpenGL::initWindow()
     {
@@ -23,6 +25,8 @@ namespace SRenderer
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+//        glfwWindowHint(GLFW_REFRESH_RATE, GLFW_DONT_CARE);
+//        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         window = glfwCreateWindow(WIDTH, HEIGHT, "Simple Renderer", nullptr, nullptr);
         if (window == nullptr)
         {
@@ -35,6 +39,7 @@ namespace SRenderer
         {
             std::cout << "Failed to initialize GLAD" << std::endl;
         }
+        glfwSwapInterval(0);
     }
 
     void SOpenGL::renderLoop()
@@ -152,7 +157,7 @@ namespace SRenderer
             mainCamera.rotate(-4.0, 0.0);
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
             mainCamera.rotate(4.0, 0.0);
-        std::cout << glm::to_string(mainCamera.get_Position()) << std::endl;
+        //std::cout << glm::to_string(mainCamera.get_Position()) << std::endl;
     };
 
     void SOpenGL::set_light()
@@ -369,32 +374,67 @@ namespace SRenderer
         std::chrono::time_point<std::chrono::steady_clock> frame_start;
         std::chrono::time_point<std::chrono::steady_clock> frame_end;
         std::chrono::microseconds frame_time;
+
+        std::chrono::time_point<std::chrono::steady_clock> gbuffer_start;
+        std::chrono::time_point<std::chrono::steady_clock> gbuffer_end;
+        std::chrono::microseconds gbuffer_time;
+
+        std::chrono::time_point<std::chrono::steady_clock> shadow_start;
+        std::chrono::time_point<std::chrono::steady_clock> shadow_end;
+        std::chrono::microseconds shadow_time;
+
+        std::chrono::time_point<std::chrono::steady_clock> direct_start;
+        std::chrono::time_point<std::chrono::steady_clock> direct_end;
+        std::chrono::microseconds direct_time;
+
+        std::chrono::time_point<std::chrono::steady_clock> hiz_start;
+        std::chrono::time_point<std::chrono::steady_clock> hiz_end;
+        std::chrono::microseconds hiz_time;
+
+        std::chrono::time_point<std::chrono::steady_clock> ssr_start;
+        std::chrono::time_point<std::chrono::steady_clock> ssr_end;
+        std::chrono::microseconds ssr_time;
+
         while (!glfwWindowShouldClose(window))
         {
             frame_start = std::chrono::steady_clock::now();
-            float currentFrame = static_cast<float>(glfwGetTime());
+            auto currentFrame = static_cast<float>(glfwGetTime());
             deltaTime = currentFrame - lastFrame;
             lastFrame = currentFrame;
             glfwPollEvents();
             processInput(window);
 
+            gbuffer_start = std::chrono::steady_clock::now();
             genGbuffer();
+            gbuffer_end = std::chrono::steady_clock::now();
 
+            shadow_start = std::chrono::steady_clock::now();
             calculateShadow();
+            shadow_end = std::chrono::steady_clock::now();
 
+            direct_start = std::chrono::steady_clock::now();
             directLighting();
+            direct_end = std::chrono::steady_clock::now();
 
+            hiz_start = std::chrono::steady_clock::now();
             genHizbuffer();
-
             pre_convolution();
+            hiz_end = std::chrono::steady_clock::now();
 
+            ssr_start = std::chrono::steady_clock::now();
             ssr();
+            ssr_end = std::chrono::steady_clock::now();
 
             glfwSwapBuffers(window);
             glfwPollEvents();
             frame_end = std::chrono::steady_clock::now();
             frame_time = std::chrono::duration_cast<std::chrono::microseconds>(frame_end - frame_start);
-//            std::cout << frame_time.count() << std::endl;
+            gbuffer_time = std::chrono::duration_cast<std::chrono::microseconds>(gbuffer_end - gbuffer_start);
+            shadow_time = std::chrono::duration_cast<std::chrono::microseconds>(shadow_end - shadow_start);
+            direct_time = std::chrono::duration_cast<std::chrono::microseconds>(direct_end - direct_start);
+            hiz_time = std::chrono::duration_cast<std::chrono::microseconds>(hiz_end - hiz_start);
+            ssr_time = std::chrono::duration_cast<std::chrono::microseconds>(ssr_end - ssr_start);
+            m_logger.file_output("{}, {}, {}, {}, {}, {}", frame_time.count(), gbuffer_time.count(), shadow_time.count(), direct_time.count(), hiz_time.count(), ssr_time.count());
         }
     }
 

@@ -29,6 +29,7 @@ endif()
 #link_directories(${LIBRARY_DIR})
 include_directories(${PROJECT_SOURCE_DIR}/3rd/glfw/include
         ${PROJECT_SOURCE_DIR}/3rd/imgui
+        ${PROJECT_SOURCE_DIR}/3rd/spdlog
         ${PROJECT_SOURCE_DIR}/3rd/imgui/backends
         ${PROJECT_SOURCE_DIR}/3rd/glad/include)
 

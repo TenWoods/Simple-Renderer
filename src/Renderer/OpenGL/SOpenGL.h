@@ -6,12 +6,13 @@
 #include "../../objects/Model.hpp"
 #include "../../objects/SLight.hpp"
 #include "../../util/Camera.h"
-
+#include "../../util/logger.hpp"
 namespace SRenderer
 {
     class SOpenGL
     {
     private:
+        logger m_logger;
         GLFWwindow* window;
         const int WIDTH = 1024;
         const int HEIGHT = 1024;

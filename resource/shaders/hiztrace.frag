@@ -16,7 +16,7 @@ uniform mat4 projection;
 uniform vec3 uLightPos;
 uniform mat4 lightVP;
 
-const int MAXLENGTH = 1000;
+const int MAXLENGTH = 10000;
 const int width = 1024;
 const int height = 1024;
 const int MAX_STEP = 10000;
@@ -316,7 +316,7 @@ void main()
 {
     vec4 normal = texture(NormalBuffer, Texcoord);
     //float roughness = normal.w;
-    float roughness = 0.3;
+    float roughness = 0.0;
     vec4 baseColor = texture(BaseColorMap, Texcoord);
     vec4 color = texture(ColorBuffer, Texcoord);
     color.w = 1.0;
@@ -397,7 +397,7 @@ void main()
 //        float fadeOnMirror = saturate(reflectDir.z * FADE_MIRROR_FACTOR);
 //        rayColor.rgb *= (fadeOnBorder * fadeOnMirror);
         float NdotL = max(dot(viewNormal, reflectDir.xyz), 0.0);
-        color.xyz += baseColor.xyz * rayColor.xyz;
+        color.xyz += rayColor.xyz;
     }
     color.xyz = color.xyz / (color.xyz + vec3(1.0));
     color.xyz = pow(color.xyz, vec3(1.0 / 2.2));
