@@ -16,10 +16,10 @@ uniform mat4 projection;
 uniform vec3 uLightPos;
 uniform mat4 lightVP;
 
-const int MAXLENGTH = 10000;
+const int MAXLENGTH = 1000;
 const int width = 1024;
 const int height = 1024;
-const int MAX_STEP = 10000;
+const int MAX_STEP = 100;
 const float MAX_THICKNESS = 0.0001;
 const int MAX_MIPMAP_LEVEL = 4;
 const float MIN_SPECULAR_POWER = 0.1;
@@ -259,58 +259,59 @@ vec3 HizConeTrace(vec2 intersectPos, float roughness)
 }
 
 
-//vec3 LinearTrace(vec3 origin, vec3 direction, float maxDistance)
-//{
-//    vec3 end = origin + direction * maxDistance;
-//    vec3 dp = end - origin;
-//    ivec2 originScreen = ivec2(origin.xy * ivec2(width, height));
-//    ivec2 endScreen = ivec2(end.xy * ivec2(width, height));
-//    ivec2 dpScreen = endScreen - originScreen;
-//    int max_dist = max(abs(dpScreen.x), abs(dpScreen.y));
-//    dp /= max_dist;
-//
-//    vec3 rayPos = origin + dp;
-//    vec3 dir = dp;
-//    vec3 result = vec3(0.0);
-//    int hit_index = -1;
-//    for (int i = 0; i < max_dist && i < MAX_STEP; i+=4)
-//    {
-////        rayPos += i * dir;
-////        float rayDepth = texture(DepthBuffer, rayPos.xy).r;
-////        rayDepth *= 2.0;
-////        rayDepth -= 1.0;
-////        if (rayDepth <= rayPos.z && rayPos.z - rayDepth <= MAX_THICKNESS)
-////        {
-////            //vec3 rayResult = BinarySearch(rayPos, dir);
-////            result = texture(ColorBuffer, rayPos.xy).xyz;
-////            break;
-////        }
-//        vec3 rayPos0 = rayPos;
-//        vec3 rayPos1 = rayPos + dir;
-//        vec3 rayPos2 = rayPos + 2.0 * dir;
-//        vec3 rayPos3 = rayPos + 3.0 * dir;
-//
-//        float depth0 = texture(DepthBuffer, rayPos0.xy).x * 2.0 - 1.0;
-//        float depth1 = texture(DepthBuffer, rayPos1.xy).x * 2.0 - 1.0;
-//        float depth2 = texture(DepthBuffer, rayPos2.xy).x * 2.0 - 1.0;
-//        float depth3 = texture(DepthBuffer, rayPos3.xy).x * 2.0 - 1.0;
-//
-//        hit_index = (rayPos0.z >= depth0 && rayPos0.z - depth0 <= MAX_THICKNESS) ? i+0 : hit_index;
-//        hit_index = (rayPos1.z >= depth1 && rayPos1.z - depth1 <= MAX_THICKNESS) ? i+1 : hit_index;
-//        hit_index = (rayPos2.z >= depth2 && rayPos2.z - depth2 <= MAX_THICKNESS) ? i+2 : hit_index;
-//        hit_index = (rayPos3.z >= depth3 && rayPos3.z - depth3 <= MAX_THICKNESS) ? i+3 : hit_index;
-//
-//        if (hit_index != -1)
+bool LinearTrace(vec3 origin, vec3 direction, float maxDistance, out vec3 intersection)
+{
+    vec3 end = origin + direction * maxDistance;
+    vec3 dp = end - origin;
+    ivec2 originScreen = ivec2(origin.xy * ivec2(width, height));
+    ivec2 endScreen = ivec2(end.xy * ivec2(width, height));
+    ivec2 dpScreen = endScreen - originScreen;
+    int max_dist = max(abs(dpScreen.x), abs(dpScreen.y));
+    dp /= max_dist;
+
+    vec3 rayPos = origin + dp;
+    vec3 dir = dp;
+    int hit_index = -1;
+    for (int i = 0; i < max_dist && i < MAX_STEP; i+=4)
+    {
+//        rayPos += i * dir;
+//        float rayDepth = texture(DepthBuffer, rayPos.xy).r;
+//        rayDepth *= 2.0;
+//        rayDepth -= 1.0;
+//        if (rayDepth <= rayPos.z && rayPos.z - rayDepth <= MAX_THICKNESS)
+//        {
+//            //vec3 rayResult = BinarySearch(rayPos, dir);
+//            result = texture(ColorBuffer, rayPos.xy).xyz;
 //            break;
-//        rayPos = rayPos3 + dir;
-//    }
-//    if (hit_index != -1)
-//    {
-//        vec3 intersection = origin + hit_index * dir;
-//        result = texture(ColorBuffer, intersection.xy).xyz;
-//    }
-//    return result;
-//}
+//        }
+        vec3 rayPos0 = rayPos;
+        vec3 rayPos1 = rayPos + dir;
+        vec3 rayPos2 = rayPos + 2.0 * dir;
+        vec3 rayPos3 = rayPos + 3.0 * dir;
+
+        float depth0 = texture(DepthBuffer, rayPos0.xy).x * 2.0 - 1.0;
+        float depth1 = texture(DepthBuffer, rayPos1.xy).x * 2.0 - 1.0;
+        float depth2 = texture(DepthBuffer, rayPos2.xy).x * 2.0 - 1.0;
+        float depth3 = texture(DepthBuffer, rayPos3.xy).x * 2.0 - 1.0;
+
+        hit_index = (rayPos0.z >= depth0 && rayPos0.z - depth0 <= MAX_THICKNESS) ? i+0 : hit_index;
+        hit_index = (rayPos1.z >= depth1 && rayPos1.z - depth1 <= MAX_THICKNESS) ? i+1 : hit_index;
+        hit_index = (rayPos2.z >= depth2 && rayPos2.z - depth2 <= MAX_THICKNESS) ? i+2 : hit_index;
+        hit_index = (rayPos3.z >= depth3 && rayPos3.z - depth3 <= MAX_THICKNESS) ? i+3 : hit_index;
+
+        if (hit_index != -1)
+            break;
+        rayPos = rayPos3 + dir;
+    }
+    if (hit_index != -1)
+    {
+        intersection = origin + hit_index * dir;
+        return true;
+//        intersection = texture(ColorBuffer, intersection.xy).xyz;
+    }
+    else
+        return false;
+}
 
 void main()
 {
@@ -363,9 +364,9 @@ void main()
     maxDistance = min(maxDistance, reflectDirClip.z >= 0 ? (1 - beginClipPos.z)/reflectDirClip.z : -beginClipPos.z/reflectDirClip.z);
 
     vec3 resultPos = vec3(0.0);
+    vec3 rayColor = vec3(0.0);
     if (Hiztrace(beginClipPos.xyz, reflectDirClip, maxDistance, resultPos))
     {
-        vec3 rayColor = vec3(0.0);
         if (roughness < 0.01f)
         {
             rayColor = textureLod(ColorBuffer, resultPos.xy, 0.0).xyz;
@@ -378,25 +379,13 @@ void main()
         {
             rayColor = HizConeTrace(resultPos.xy, roughness);
         }
-        //vec3 rayColor = textureLod(ColorBuffer, resultPos.xy, 0.0).xyz;
-        vec3 viewDir = -normalize(viewPos.xyz);
-        vec3 halfVec = normalize(viewDir + reflectDir.xyz);
-        vec3 F0 = vec3(0.04);
-        F0 = mix(F0, baseColor.xyz, metallic);
-        float D = DistributionGGX(viewNormal, halfVec, roughness);
-        float G = GeometrySmith(viewNormal, viewDir, reflectDir.xyz, roughness);
-        vec3 F = fresnelSchlick(max(dot(halfVec, viewDir), 0.0), F0);
-
-        vec3 numerator = D * G * F;
-        float denominator = 4.0 * max(dot(viewNormal, viewDir), 0.0) * max(dot(viewNormal, reflectDir.xyz), 0.0);
-        vec3 specular = numerator / max(denominator, 0.001);
+//        vec3 rayColor = textureLod(ColorBuffer, resultPos.xy, 0.0).xyz;
 //        float boundary = distance(resultPos.xy, vec2(0.5)) * 2.0;
 //        float fadeOnBorder = 1.0 - saturate((boundary - FADE_BORDER_START) / (FADE_BORDER_END - FADE_BORDER_START));
 //
 //        /* Compute fading on mirror (rays towards the camera) */
 //        float fadeOnMirror = saturate(reflectDir.z * FADE_MIRROR_FACTOR);
 //        rayColor.rgb *= (fadeOnBorder * fadeOnMirror);
-        float NdotL = max(dot(viewNormal, reflectDir.xyz), 0.0);
         color.xyz += rayColor.xyz;
     }
     color.xyz = color.xyz / (color.xyz + vec3(1.0));

@@ -408,22 +408,22 @@ namespace SRenderer
             genGbuffer();
             gbuffer_end = std::chrono::steady_clock::now();
 
-            shadow_start = std::chrono::steady_clock::now();
-            calculateShadow();
-            shadow_end = std::chrono::steady_clock::now();
-
-            direct_start = std::chrono::steady_clock::now();
-            directLighting();
-            direct_end = std::chrono::steady_clock::now();
-
-            hiz_start = std::chrono::steady_clock::now();
-            genHizbuffer();
-            pre_convolution();
-            hiz_end = std::chrono::steady_clock::now();
-
-            ssr_start = std::chrono::steady_clock::now();
-            ssr();
-            ssr_end = std::chrono::steady_clock::now();
+//            shadow_start = std::chrono::steady_clock::now();
+//            calculateShadow();
+//            shadow_end = std::chrono::steady_clock::now();
+//
+//            direct_start = std::chrono::steady_clock::now();
+//            directLighting();
+//            direct_end = std::chrono::steady_clock::now();
+//
+//            hiz_start = std::chrono::steady_clock::now();
+//            genHizbuffer();
+//            pre_convolution();
+//            hiz_end = std::chrono::steady_clock::now();
+//
+//            ssr_start = std::chrono::steady_clock::now();
+//            ssr();
+//            ssr_end = std::chrono::steady_clock::now();
 
             glfwSwapBuffers(window);
             glfwPollEvents();
